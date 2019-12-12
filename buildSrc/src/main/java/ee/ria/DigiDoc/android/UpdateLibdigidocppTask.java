@@ -46,11 +46,11 @@ public class UpdateLibdigidocppTask extends DefaultTask {
         ABIS.add("x86");
 
         ABI_FILES.put("arm64-v8a", "androidarm64");
-        ABI_FILES.put("armeabi-v7a", "androidarm");
+//        ABI_FILES.put("armeabi-v7a", "androidarm");
         ABI_FILES.put("x86", "androidx86");
 
         ABI_DIRS.put("arm64-v8a", "aarch64-linux-android");
-        ABI_DIRS.put("armeabi-v7a", "arm-linux-androideabi");
+//        ABI_DIRS.put("armeabi-v7a", "arm-linux-androideabi");
         ABI_DIRS.put("x86", "i686-linux-android");
     }
 
