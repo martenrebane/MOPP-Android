@@ -145,7 +145,7 @@ public class UpdateLibdigidocppTask extends DefaultTask {
 
         if (isTestTsl) {
             Files.copy(
-                    new File(cacheDir, "lib/libdigidoc_java-debug.so").toPath(),
+                    new File(cacheDir, "lib/libdigidoc_java.so").toPath(),
                     new File(getProject().getProjectDir(), "src/envtest/jniLibs/" + abi + "/libdigidoc_java.so").toPath(),
                     StandardCopyOption.REPLACE_EXISTING
             );
@@ -163,7 +163,7 @@ public class UpdateLibdigidocppTask extends DefaultTask {
                     StandardCopyOption.REPLACE_EXISTING
             );
             Files.copy(
-                    new File(cacheDir, "lib/libdigidoc_java-debug.so").toPath(),
+                    new File(cacheDir, "lib/libdigidoc_java.so").toPath(),
                     new File(getProject().getProjectDir(), "src/debug/jniLibs/" + abi + "/libdigidoc_java.so").toPath(),
                     StandardCopyOption.REPLACE_EXISTING
             );
