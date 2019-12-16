@@ -15,7 +15,7 @@ allprojects {
 
 //    project.file('apk').mkdirs()
 
-    def buildFolder = new File('app/build')
+    def buildFolder = new File('app/build/bundle')
 
     buildDir = "app/build"
 
