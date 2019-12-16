@@ -13,8 +13,18 @@ allprojects {
         jcenter()
     }
 
+//    project.file('apk').mkdirs()
+
+    def buildFolder = new File('app/build/apk')
+
+    buildDir = "app/build/apk"
+
     gradle.buildFinished {
-        buildDir = "app/build/bundle"
+        if (!buildFolder.exists()) {
+            buildDir = "app/build/bundle"
+        } else {
+            buildDir = "app/build/apk"
+        }
     }
 }
 
