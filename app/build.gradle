@@ -13,8 +13,6 @@ android {
 
         multiDexEnabled true
 
-        buildDir = "${System.getenv('MOPP_Android_Build_Dir')}"
-
         ndk {
             abiFilters = []
             abiFilters.addAll(appAbiFilters.split(';').collect{it as String})

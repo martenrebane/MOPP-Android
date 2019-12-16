@@ -13,7 +13,9 @@ allprojects {
         jcenter()
     }
 
-    buildDir = "${System.getenv('MOPP_Android_Build_Dir')}"
+    gradle.buildFinished {
+        buildDir = "app/build/bundle"
+    }
 }
 
 ext {
