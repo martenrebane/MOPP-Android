@@ -12,6 +12,8 @@ allprojects {
         google()
         jcenter()
     }
+
+    buildDir = "${System.getenv('MOPP_Android_Build_Dir')}"
 }
 
 ext {
