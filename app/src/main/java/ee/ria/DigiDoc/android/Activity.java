@@ -132,8 +132,6 @@ public final class Activity extends AppCompatActivity {
     }
 
     private void enableOpenAllFileTypesIfNeeded() {
-        System.out.println(isOpenAllTypesEnabled());
-        System.out.println(isContainerView());
         if (isOpenAllTypesEnabled() && isContainerView()) {
             disableOpenAllFileTypes();
 
@@ -151,13 +149,11 @@ public final class Activity extends AppCompatActivity {
     }
 
     private boolean isContainerView() {
-        System.out.println(getIntent().getAction() != null);
-        System.out.println(getIntent().getAction().equals(Intent.ACTION_VIEW));
-        return getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_VIEW);
-        /*return getIntent().getAction() != null && getIntent().getComponent() != null &&
+        // return getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_VIEW);
+        return getIntent().getAction() != null && getIntent().getComponent() != null &&
                 !getIntent().getAction().equals(Intent.ACTION_VIEW) &&
                 (!getIntent().getComponent().equals(getAllTypesComponentName()) ||
-                !getIntent().getComponent().equals(getCustomTypesComponentName()));*/
+                !getIntent().getComponent().equals(getCustomTypesComponentName()));
     }
 
     private boolean isOpenAllTypesComponentEnabled() throws PackageManager.NameNotFoundException {
@@ -169,7 +165,7 @@ public final class Activity extends AppCompatActivity {
             System.out.println(pm.getActivityInfo(getAllTypesComponentName(), PackageManager.GET_DISABLED_COMPONENTS).enabled);
             return pm.getActivityInfo(getAllTypesComponentName(), PackageManager.GET_DISABLED_COMPONENTS).enabled;
         }
-    }
+      }
 
     private ComponentName getAllTypesComponentName() {
         return new ComponentName(getPackageName(), getClass().getName() + ".OPEN_ALL_FILE_TYPES");
@@ -200,6 +196,27 @@ public final class Activity extends AppCompatActivity {
         pm.setComponentEnabledSetting(getAllTypesComponentName(), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
         pm.setComponentEnabledSetting(getOpenPDFComponentName(), PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
         pm.setComponentEnabledSetting(getCustomTypesComponentName(), PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
+    }
+
+    private boolean isContainerView() {
+        System.out.println(getIntent().getAction() != null);
+        System.out.println(getIntent().getAction().equals(Intent.ACTION_VIEW));
+//        return getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_VIEW);
+        return getIntent().getAction() != null && getIntent().getComponent() != null &&
+                !getIntent().getAction().equals(Intent.ACTION_VIEW) &&
+                (!getIntent().getComponent().equals(getAllTypesComponentName()) ||
+                !getIntent().getComponent().equals(getCustomTypesComponentName()));
+    }
+
+    private boolean isOpenAllTypesComponentEnabled() throws PackageManager.NameNotFoundException {
+        PackageManager pm = getApplicationContext().getPackageManager();
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            System.out.println(pm.getActivityInfo(getAllTypesComponentName(), PackageManager.MATCH_DISABLED_COMPONENTS).enabled);
+            return pm.getActivityInfo(getAllTypesComponentName(), PackageManager.MATCH_DISABLED_COMPONENTS).enabled;
+        } else {
+            System.out.println(pm.getActivityInfo(getAllTypesComponentName(), PackageManager.GET_DISABLED_COMPONENTS).enabled);
+            return pm.getActivityInfo(getAllTypesComponentName(), PackageManager.GET_DISABLED_COMPONENTS).enabled;
+        }
     }
 
     @Override

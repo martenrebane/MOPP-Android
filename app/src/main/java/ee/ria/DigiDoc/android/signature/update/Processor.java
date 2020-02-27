@@ -183,6 +183,8 @@ final class Processor implements ObservableTransformer<Action, Result> {
 
         documentView = upstream -> upstream.switchMap(action -> {
             File containerFile = action.containerFile();
+            // Disable opening files in container with DigiDoc app
+//            disableOpenAllTypes(application);
             return signatureContainerDataSource
                     .getDocumentFile(containerFile, action.document())
                     .toObservable()
