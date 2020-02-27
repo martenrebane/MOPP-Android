@@ -183,8 +183,6 @@ final class Processor implements ObservableTransformer<Action, Result> {
 
         documentView = upstream -> upstream.switchMap(action -> {
             File containerFile = action.containerFile();
-            // Disable opening files in container with DigiDoc app
-            disableOpenAllTypes(application);
             return signatureContainerDataSource
                     .getDocumentFile(containerFile, action.document())
                     .toObservable()
@@ -351,17 +349,6 @@ final class Processor implements ObservableTransformer<Action, Result> {
         }
 
         return name;
-    }
-
-    private void disableOpenAllTypes(Application application) {
-        PackageManager pm = application.getApplicationContext().getPackageManager();
-        ComponentName openAllTypesComponent = new ComponentName(application.getPackageName(), Activity.class.getName() + ".OPEN_ALL_FILE_TYPES");
-        ComponentName openCustomTypesComponent = new ComponentName(application.getPackageName(), Activity.class.getName() + ".OPEN_CUSTOM_TYPES");
-        ComponentName openPDFComponent = new ComponentName(application.getPackageName(), Activity.class.getName() + ".OPEN_PDF_TYPE");
-
-        pm.setComponentEnabledSetting(openAllTypesComponent, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
-        pm.setComponentEnabledSetting(openPDFComponent, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
-        pm.setComponentEnabledSetting(openCustomTypesComponent, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
     }
 
 

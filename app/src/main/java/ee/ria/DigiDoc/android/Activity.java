@@ -124,11 +124,50 @@ public final class Activity extends AppCompatActivity {
         enableOpenAllFileTypesIfNeeded();
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        enableOpenAllFileTypesIfNeeded();
+    }
+
     private void enableOpenAllFileTypesIfNeeded() {
-        if (isOpenAllTypesEnabled()) {
-            enableOpenAllFileTypes();
-        } else {
+        System.out.println(isOpenAllTypesEnabled());
+        System.out.println(isContainerView());
+        if (isOpenAllTypesEnabled() && isContainerView()) {
             disableOpenAllFileTypes();
+
+        } else {
+            try {
+                if (!isOpenAllTypesComponentEnabled()) {
+                    enableOpenAllFileTypes();
+                }
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+                Timber.e(e, "Failed to get component state");
+            }
+
+        }
+    }
+
+    private boolean isContainerView() {
+        System.out.println(getIntent().getAction() != null);
+        System.out.println(getIntent().getAction().equals(Intent.ACTION_VIEW));
+        return getIntent().getAction() != null && getIntent().getAction().equals(Intent.ACTION_VIEW);
+        /*return getIntent().getAction() != null && getIntent().getComponent() != null &&
+                !getIntent().getAction().equals(Intent.ACTION_VIEW) &&
+                (!getIntent().getComponent().equals(getAllTypesComponentName()) ||
+                !getIntent().getComponent().equals(getCustomTypesComponentName()));*/
+    }
+
+    private boolean isOpenAllTypesComponentEnabled() throws PackageManager.NameNotFoundException {
+        PackageManager pm = getApplicationContext().getPackageManager();
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            System.out.println(pm.getActivityInfo(getAllTypesComponentName(), PackageManager.MATCH_DISABLED_COMPONENTS).enabled);
+            return pm.getActivityInfo(getAllTypesComponentName(), PackageManager.MATCH_DISABLED_COMPONENTS).enabled;
+        } else {
+            System.out.println(pm.getActivityInfo(getAllTypesComponentName(), PackageManager.GET_DISABLED_COMPONENTS).enabled);
+            return pm.getActivityInfo(getAllTypesComponentName(), PackageManager.GET_DISABLED_COMPONENTS).enabled;
         }
     }
 
