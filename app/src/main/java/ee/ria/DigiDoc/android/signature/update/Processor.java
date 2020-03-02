@@ -3,7 +3,9 @@ package ee.ria.DigiDoc.android.signature.update;
 import android.app.Application;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.support.v7.preference.PreferenceManager;
 import android.view.accessibility.AccessibilityEvent;
 
 import com.google.common.collect.ImmutableList;
@@ -184,7 +186,7 @@ final class Processor implements ObservableTransformer<Action, Result> {
         documentView = upstream -> upstream.switchMap(action -> {
             File containerFile = action.containerFile();
             // Disable opening files in container with DigiDoc app
-            disableOpenAllTypes(application);
+//            disableOpenAllTypes(application);
             return signatureContainerDataSource
                     .getDocumentFile(containerFile, action.document())
                     .toObservable()

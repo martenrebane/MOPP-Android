@@ -195,7 +195,7 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                         .observeOn(AndroidSchedulers.mainThread()));
 
         dataFileView = upstream -> upstream.switchMap(intent -> {
-            disableOpenAllTypes(application);
+//            disableOpenAllTypes(application);
             return Observable
                     .fromCallable(() -> {
                         File file = intent.dataFile();
