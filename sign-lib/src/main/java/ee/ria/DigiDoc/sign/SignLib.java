@@ -49,6 +49,7 @@ public final class SignLib {
             Timber.e(e, "Init schema failed");
         }
 
+//        initLibDigiDocLogging(context);
         initLibDigiDocpp(context, tsaUrlPreferenceKey, configurationProvider, userAgent);
 
     }
@@ -100,9 +101,17 @@ public final class SignLib {
 
     }
 
+    private static void initLibDigiDocLogging(Context context) {
+        File myDir = new File(getSchemaDir(context) + File.separator + "randomFolder");
+        myDir.mkdir();
+        DigiDocConf.instance().setLogLevel(4);
+        DigiDocConf.instance().setLogFile(myDir.getAbsolutePath() + File.separator + "thisisadigidocpp.log");
+    }
+
     private static void initLibDigiDocConfiguration(Context context, String tsaUrlPreferenceKey, ConfigurationProvider configurationProvider) {
         DigiDocConf conf = new DigiDocConf(getSchemaDir(context).getAbsolutePath());
         Conf.init(conf.transfer());
+        initLibDigiDocLogging(context);
 
         forcePKCS12Certificate();
         overrideTSLUrl(configurationProvider.getTslUrl());
@@ -110,6 +119,7 @@ public final class SignLib {
         overrideSignatureValidationServiceUrl(configurationProvider.getSivaUrl());
         overrideOCSPUrls(configurationProvider.getOCSPUrls());
         initTsaUrl(context, tsaUrlPreferenceKey, configurationProvider.getTsaUrl());
+        initLibDigiDocLogging(context);
     }
 
     private static void forcePKCS12Certificate() {
