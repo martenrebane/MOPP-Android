@@ -1,11 +1,13 @@
 package ee.ria.DigiDoc.sign;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.text.TextUtils;
+import android.widget.Toast;
 
 import com.google.common.io.ByteStreams;
 
@@ -106,12 +108,17 @@ public final class SignLib {
         myDir.mkdir();
         DigiDocConf.instance().setLogLevel(4);
         DigiDocConf.instance().setLogFile(myDir.getAbsolutePath() + File.separator + "thisisadigidocpp.log");
+        System.out.println("DEBUG RELEASE, log location: " + DigiDocConf.instance().logFile());
+        Toast.makeText(context, "DEBUG RELEASE, log location: " + DigiDocConf.instance().logFile(),
+                Toast.LENGTH_LONG).show();
     }
 
     private static void initLibDigiDocConfiguration(Context context, String tsaUrlPreferenceKey, ConfigurationProvider configurationProvider) {
         DigiDocConf conf = new DigiDocConf(getSchemaDir(context).getAbsolutePath());
         Conf.init(conf.transfer());
-        initLibDigiDocLogging(context);
+        if (!BuildConfig.BUILD_TYPE.contentEquals("debug")) {
+            initLibDigiDocLogging(context);
+        }
 
         forcePKCS12Certificate();
         overrideTSLUrl(configurationProvider.getTslUrl());
@@ -119,7 +126,6 @@ public final class SignLib {
         overrideSignatureValidationServiceUrl(configurationProvider.getSivaUrl());
         overrideOCSPUrls(configurationProvider.getOCSPUrls());
         initTsaUrl(context, tsaUrlPreferenceKey, configurationProvider.getTsaUrl());
-        initLibDigiDocLogging(context);
     }
 
     private static void forcePKCS12Certificate() {
