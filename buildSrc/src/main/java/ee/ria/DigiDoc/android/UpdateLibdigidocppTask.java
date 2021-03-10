@@ -166,7 +166,7 @@ public class UpdateLibdigidocppTask extends DefaultTask {
     }
 
     private static void delete(File file) {
-        if (file.isDirectory()) {
+        if (file != null && file.isDirectory() && file.listFiles().length > 0) {
             for (File f : file.listFiles()) {
                 delete(f);
             }
@@ -220,19 +220,21 @@ public class UpdateLibdigidocppTask extends DefaultTask {
                 Files.copy(file.toPath(), outputStream);
                 outputStream.closeEntry();
             }
-            outputStream.close();
         }
     }
 
     private static List<File> files(File dir) {
         List<File> files = new ArrayList<>();
-        for (File file : dir.listFiles()) {
-            if (file.isDirectory()) {
-                files.addAll(files(file));
-            } else {
-                files.add(file);
+        if (dir != null && dir.listFiles().length > 0) {
+            for (File file : dir.listFiles()) {
+                if (file.isDirectory()) {
+                    files.addAll(files(file));
+                } else {
+                    files.add(file);
+                }
             }
         }
+
         return files;
     }
 }
