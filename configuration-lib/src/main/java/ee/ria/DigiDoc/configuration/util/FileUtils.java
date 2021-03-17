@@ -1,19 +1,19 @@
 package ee.ria.DigiDoc.configuration.util;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import ee.ria.DigiDoc.configuration.BuildConfig;
 import timber.log.Timber;
 
 public class FileUtils {
@@ -29,7 +29,7 @@ public class FileUtils {
     }
 
     public static String readFileContent(InputStream inputStream) {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             StringBuilder sb = new StringBuilder();
             int i;
             while((i = reader.read()) != -1) {
@@ -64,11 +64,12 @@ public class FileUtils {
 
     public static void storeFile(String filePath, String content) {
         File file = new File(filePath);
-        file.getParentFile().mkdirs();
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine("any log event");
+        boolean isDirsCreated = file.getParentFile().mkdirs();
+        if (isDirsCreated) {
+            logMessage(Level.INFO, "Directories created for " + filePath);
         }
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+        try (FileOutputStream fileStream = new FileOutputStream(file.getAbsoluteFile());
+             OutputStreamWriter writer = new OutputStreamWriter(fileStream, StandardCharsets.UTF_8)) {
             writer.write(content);
         } catch (IOException e) {
             throw new IllegalStateException("Failed to store file '" + filePath + "'!", e);
@@ -77,7 +78,10 @@ public class FileUtils {
 
     public static void storeFile(String filePath, byte[] content) {
         File file = new File(filePath);
-        file.getParentFile().mkdirs();
+        boolean isDirsCreated = file.getParentFile().mkdirs();
+        if (isDirsCreated) {
+            logMessage(Level.INFO, "Directories created for " + filePath);
+        }
         try (FileOutputStream os = new FileOutputStream(file)) {
             os.write(content);
         } catch (IOException e) {
@@ -88,7 +92,10 @@ public class FileUtils {
     public static void createDirectoryIfNotExist(String directory) {
         File destinationDirectory = new File(directory);
         if (!destinationDirectory.exists()) {
-            destinationDirectory.mkdirs();
+            boolean isDirsCreated = destinationDirectory.mkdirs();
+            if (isDirsCreated) {
+                logMessage(Level.INFO, "Directories created for " + directory);
+            }
         }
     }
 
@@ -97,12 +104,18 @@ public class FileUtils {
     }
 
     public static void removeFile(String filePath) {
-        new File(filePath).delete();
+        File fileToDelete = new File(filePath);
+        if (fileToDelete.exists()) {
+            boolean isFileDeleted = fileToDelete.delete();
+            if (isFileDeleted) {
+                logMessage(Level.INFO, "File deleted: " + filePath);
+            }
+        }
     }
 
     public static void writeToFile(BufferedReader reader, String destinationPath, String fileName) {
         try (FileOutputStream fileStream = new FileOutputStream(new File(destinationPath + File.separator + fileName));
-             OutputStreamWriter writer = new OutputStreamWriter(fileStream)) {
+             OutputStreamWriter writer = new OutputStreamWriter(fileStream, StandardCharsets.UTF_8)) {
 
             String fileLine;
             while ((fileLine = reader.readLine()) != null) {
@@ -110,6 +123,12 @@ public class FileUtils {
             }
         } catch (IOException e) {
             Timber.e(e, "Failed to open file: %s", fileName);
+        }
+    }
+
+    private static void logMessage(Level level, String message) {
+        if (BuildConfig.DEBUG && logger.isLoggable(level)) {
+            logger.log(level, message);
         }
     }
 }
