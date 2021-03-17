@@ -71,6 +71,7 @@ public class FileUtils {
     public static void storeFile(String filePath, byte[] content) {
         File file = new File(filePath);
         file.getParentFile().mkdirs();
+        Timber.d("storeFile");
         try (FileOutputStream os = new FileOutputStream(file)) {
             os.write(content);
         } catch (IOException e) {
@@ -82,6 +83,7 @@ public class FileUtils {
         File destinationDirectory = new File(directory);
         if (!destinationDirectory.exists()) {
             destinationDirectory.mkdirs();
+            Timber.d("createDirectoryIfNotExist");
         }
     }
 
@@ -91,6 +93,7 @@ public class FileUtils {
 
     public static void removeFile(String filePath) {
         new File(filePath).delete();
+        Timber.d("removeFile");
     }
 
     public static void writeToFile(BufferedReader reader, String destinationPath, String fileName) {
