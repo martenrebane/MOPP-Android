@@ -6,7 +6,6 @@ import org.openeid.cdoc4j.RSARecipient;
 import org.openeid.cdoc4j.exception.DecryptionException;
 import org.openeid.cdoc4j.token.Token;
 
-import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
@@ -30,7 +29,7 @@ class PKCS11Token implements Token {
     @Override
     public byte[] decrypt(RSARecipient recipient) throws DecryptionException {
         try {
-            return token.decrypt(pin1.getBytes(StandardCharsets.UTF_8), recipient.getEncryptedKey(), false);
+            return token.decrypt(pin1.getBytes(), recipient.getEncryptedKey(), false);
         } catch (Pin1InvalidException e) {
             throw new Pin1InvalidException.DecryptPin1InvalidException(e);
         } catch (CryptoException e) {
@@ -43,7 +42,7 @@ class PKCS11Token implements Token {
         SubjectPublicKeyInfo info = SubjectPublicKeyInfo
                 .getInstance(recipient.getEphemeralPublicKey().getEncoded());
         try {
-            return token.decrypt(pin1.getBytes(StandardCharsets.UTF_8), info.getPublicKeyData().getBytes(), true);
+            return token.decrypt(pin1.getBytes(), info.getPublicKeyData().getBytes(), true);
         } catch (Pin1InvalidException e) {
             throw new Pin1InvalidException.DecryptPin1InvalidException(e);
         } catch (CryptoException e) {

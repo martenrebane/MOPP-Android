@@ -6,8 +6,8 @@ public enum CodeType {
     PIN2((byte) 0x02, (byte) 0x02),
     PUK((byte) 0x00, (byte) 0x03);
 
-    public final byte value;
-    public final byte retryValue;
+    public byte value;
+    public byte retryValue;
 
     CodeType(byte value, byte retryValue) {
         this.value = value;

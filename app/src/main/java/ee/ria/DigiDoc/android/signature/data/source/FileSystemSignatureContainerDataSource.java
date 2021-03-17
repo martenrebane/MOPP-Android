@@ -2,11 +2,8 @@ package ee.ria.DigiDoc.android.signature.data.source;
 
 import com.google.common.collect.ImmutableList;
 
-import org.apache.commons.io.FilenameUtils;
-
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -52,7 +49,7 @@ public final class FileSystemSignatureContainerDataSource implements SignatureCo
                 containerFile = fileSystem.addSignatureContainer(fileStream);
             } else {
                 String containerName = String.format(Locale.US, "%s.%s",
-                        getNameWithoutExtension(FilenameUtils.getName(fileStreams.get(0).displayName())),
+                        getNameWithoutExtension(fileStreams.get(0).displayName()),
                         SIGNATURE_CONTAINER_EXT);
                 isExistingContainer = false;
                 containerFile = fileSystem.generateSignatureContainerFile(containerName);
@@ -111,7 +108,7 @@ public final class FileSystemSignatureContainerDataSource implements SignatureCo
         return Single.fromCallable(() ->
                 SignedContainer
                         .open(containerFile)
-                        .addAdEsSignature(signature.getBytes(StandardCharsets.UTF_8)));
+                        .addAdEsSignature(signature.getBytes()));
     }
 
     private ImmutableList<FileStream> getContainerFiles(File containerFile, ImmutableList<FileStream> documentStreams) throws Exception {

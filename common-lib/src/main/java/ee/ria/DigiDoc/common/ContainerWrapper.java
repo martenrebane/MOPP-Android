@@ -43,13 +43,9 @@ public class ContainerWrapper {
 
     public String prepareSignature(String cert) throws CertificateException {
         signature = container.prepareWebSignature(CertificateUtil.x509Certificate(cert).getEncoded(), SIGNATURE_PROFILE_TS);
-        if (signature != null) {
-            byte[] dataToSignBytes = Base64.encode(signature.dataToSign());
-            String dataToSign = new String(dataToSignBytes, StandardCharsets.UTF_8);
-            return removeWhitespaces(dataToSign);
-        }
-
-        return null;
+        byte[] dataToSignBytes = Base64.encode(signature.dataToSign());
+        String dataToSign = new String(dataToSignBytes, StandardCharsets.UTF_8);
+        return removeWhitespaces(dataToSign);
     }
 
     public void finalizeSignature(String signatureValue) {

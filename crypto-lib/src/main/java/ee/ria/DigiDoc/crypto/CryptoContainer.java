@@ -5,7 +5,6 @@ import androidx.annotation.WorkerThread;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 
-import org.apache.commons.io.FilenameUtils;
 import org.openeid.cdoc4j.CDOCBuilder;
 import org.openeid.cdoc4j.CDOCDecrypter;
 import org.openeid.cdoc4j.CDOCParser;
@@ -17,12 +16,10 @@ import org.openeid.cdoc4j.exception.RecipientMissingException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.nio.file.FileSystem;
 import java.util.List;
 import java.util.Locale;
 
 import ee.ria.DigiDoc.common.Certificate;
-import ee.ria.DigiDoc.common.FileUtil;
 import okio.ByteString;
 
 import static com.google.common.io.Files.getFileExtension;
@@ -170,7 +167,7 @@ public abstract class CryptoContainer {
      * @return True if valid container file name.
      */
     public static boolean isContainerFileName(String fileName) {
-        return getFileExtension(FilenameUtils.getName(fileName)).toLowerCase(Locale.US).equals(EXTENSION);
+        return getFileExtension(fileName).toLowerCase(Locale.US).equals(EXTENSION);
     }
 
     /**

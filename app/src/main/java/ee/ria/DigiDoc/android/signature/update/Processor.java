@@ -36,7 +36,6 @@ import io.reactivex.ObservableSource;
 import io.reactivex.ObservableTransformer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
-import timber.log.Timber;
 
 import static android.app.Activity.RESULT_OK;
 import static com.google.common.io.Files.getFileExtension;
@@ -126,8 +125,9 @@ final class Processor implements ObservableTransformer<Action, Result> {
 
                                 checkContainerName(newFile);
 
-                                boolean isFileDeleted = newFile.delete();
-                                if (!isFileDeleted || !containerFile.renameTo(newFile)) {
+                                //noinspection ResultOfMethodCallIgnored
+                                newFile.delete();
+                                if (!containerFile.renameTo(newFile)) {
                                     throw new IOException();
                                 }
 
@@ -253,10 +253,7 @@ final class Processor implements ObservableTransformer<Action, Result> {
                 return Observable.just(Result.DocumentRemoveResult.confirmation(action.document()));
             } else {
                 if (action.documents().size() == 1) {
-                    boolean isFileDeleted = action.containerFile().delete();
-                    if (isFileDeleted) {
-                        Timber.d("File %s deleted", action.containerFile().getName());
-                    }
+                    action.containerFile().delete();
                     navigator.execute(Transaction.pop());
                     return Observable.just(Result.DocumentRemoveResult.success(null));
                 } else {

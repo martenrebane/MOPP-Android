@@ -152,10 +152,8 @@ public final class SignLib {
 
     private static File getSchemaDir(Context context) {
         File schemaDir = new File(context.getCacheDir(), SCHEMA_DIR);
-        boolean isDirsCreated = schemaDir.mkdirs();
-        if (isDirsCreated) {
-            Timber.d("Directories created for %s", schemaDir.getPath());
-        }
+        //noinspection ResultOfMethodCallIgnored
+        schemaDir.mkdirs();
         return schemaDir;
     }
 
