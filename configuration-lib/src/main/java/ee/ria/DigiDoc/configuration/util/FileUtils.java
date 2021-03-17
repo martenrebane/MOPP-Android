@@ -11,10 +11,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import timber.log.Timber;
 
 public class FileUtils {
+
+    private static final Logger logger = Logger.getLogger(FileUtils.class.getName());
 
     public static String readFileContent(String filePath) {
         try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
@@ -61,6 +65,9 @@ public class FileUtils {
     public static void storeFile(String filePath, String content) {
         File file = new File(filePath);
         file.getParentFile().mkdirs();
+        if (logger.isLoggable(Level.FINE)) {
+            logger.fine("any log event");
+        }
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             writer.write(content);
         } catch (IOException e) {
