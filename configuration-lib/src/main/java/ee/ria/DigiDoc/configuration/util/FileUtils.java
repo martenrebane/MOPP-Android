@@ -1,5 +1,7 @@
 package ee.ria.DigiDoc.configuration.util;
 
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -14,6 +16,8 @@ import java.nio.charset.StandardCharsets;
 import timber.log.Timber;
 
 public class FileUtils {
+
+    private static final String TAG = "FileUtils";
 
     public static String readFileContent(String filePath) {
         try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
@@ -59,13 +63,9 @@ public class FileUtils {
 
     public static void storeFile(String filePath, String content) {
         File file = new File(filePath);
-        try {
-            boolean isDirsCreated = file.getParentFile().mkdirs();
-            if (isDirsCreated) {
-                Timber.i("Directories created for %s", filePath);
-            }
-        } catch (Exception e) {
-            Timber.e(e, "Failed to create directories for %s", filePath);
+        boolean isDirsCreated = file.getParentFile().mkdirs();
+        if (isDirsCreated) {
+            Log.d(TAG, "Directories created for " + filePath);
         }
         try (FileOutputStream fileStream = new FileOutputStream(file.getAbsoluteFile());
              OutputStreamWriter writer = new OutputStreamWriter(fileStream, StandardCharsets.UTF_8)) {
@@ -77,13 +77,9 @@ public class FileUtils {
 
     public static void storeFile(String filePath, byte[] content) {
         File file = new File(filePath);
-        try {
-            boolean isDirsCreated = file.getParentFile().mkdirs();
-            if (isDirsCreated) {
-                Timber.i("Directories created for %s", filePath);
-            }
-        } catch (Exception e) {
-            Timber.e(e, "Failed to create directories for %s", filePath);
+        boolean isDirsCreated = file.getParentFile().mkdirs();
+        if (isDirsCreated) {
+            Log.d(TAG, "Directories created for " + filePath);
         }
         try (FileOutputStream os = new FileOutputStream(file)) {
             os.write(content);
@@ -95,13 +91,9 @@ public class FileUtils {
     public static void createDirectoryIfNotExist(String directory) {
         File destinationDirectory = new File(directory);
         if (!destinationDirectory.exists()) {
-            try {
-                boolean isDirsCreated = destinationDirectory.mkdirs();
-                if (isDirsCreated) {
-                    Timber.d("Directories created for %s", directory);
-                }
-            } catch (Exception e) {
-                Timber.e(e, "Failed to create directories for %s", directory);
+            boolean isDirsCreated = destinationDirectory.mkdirs();
+            if (isDirsCreated) {
+                Log.d(TAG, "Directories created for " + directory);
             }
         }
     }
@@ -113,13 +105,9 @@ public class FileUtils {
     public static void removeFile(String filePath) {
         File fileToDelete = new File(filePath);
         if (fileToDelete.exists()) {
-            try {
-                boolean isFileDeleted = fileToDelete.delete();
-                if (isFileDeleted) {
-                    Timber.i("File %s deleted", filePath);
-                }
-            } catch (Exception e) {
-                Timber.e(e, "Failed to delete file %s", filePath);
+            boolean isFileDeleted = fileToDelete.delete();
+            if (isFileDeleted) {
+                Log.d(TAG, "File deleted: " + filePath);
             }
         }
     }
