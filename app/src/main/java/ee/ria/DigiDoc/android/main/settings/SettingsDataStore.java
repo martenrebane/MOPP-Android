@@ -3,11 +3,10 @@ package ee.ria.DigiDoc.android.main.settings;
 import android.app.Application;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.support.annotation.Nullable;
-import android.support.v7.preference.PreferenceManager;
+import androidx.annotation.Nullable;
+import androidx.preference.PreferenceManager;
 
-import com.google.common.collect.ImmutableBiMap;
-
+import java.util.Arrays;
 import java.util.Locale;
 
 import javax.inject.Inject;
@@ -20,28 +19,35 @@ public final class SettingsDataStore {
 
     private final SharedPreferences preferences;
     private final Resources resources;
-    private final ImmutableBiMap<String, String> fileTypeMap;
 
     @Inject SettingsDataStore(Application application) {
         preferences = PreferenceManager.getDefaultSharedPreferences(application);
         this.resources = application.getResources();
-        fileTypeMap = ImmutableBiMap
-                .<String, String>builder()
-                .put(resources.getString(R.string.main_settings_signature_profile_time_mark_key),
-                        resources.getString(R.string.main_settings_file_type_bdoc_key))
-                .put(resources.getString(R.string.main_settings_signature_profile_time_stamp_key),
-                        resources.getString(R.string.main_settings_file_type_asice_key))
-                .build();
     }
 
-    public String getSignatureProfile() {
-        return preferences.getString(
-                resources.getString(R.string.main_settings_signature_profile_key),
-                resources.getString(R.string.main_settings_signature_profile_time_mark_key));
+    public int getSignatureAddMethod() {
+        int signatureAddMethod = preferences.getInt(resources.getString(R.string.main_settings_signature_add_method_key), R.id.signatureUpdateSignatureAddMethodMobileId);
+        Integer[] signatureAddMethods = { R.id.signatureUpdateSignatureAddMethodMobileId, R.id.signatureUpdateSignatureAddMethodSmartId, R.id.signatureUpdateSignatureAddMethodIdCard };
+        if (!Arrays.asList(signatureAddMethods).contains(signatureAddMethod)) {
+            return R.id.signatureUpdateSignatureAddMethodMobileId;
+        }
+        return signatureAddMethod;
     }
 
-    public String getFileType() {
-        return fileTypeMap.get(getSignatureProfile());
+    public void setSignatureAddMethod(int method) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putInt(resources.getString(R.string.main_settings_signature_add_method_key), method);
+        editor.apply();
+    }
+
+    public String getUuid() {
+        return preferences.getString(resources.getString(R.string.main_settings_uuid_key), "");
+    }
+
+    public void setUuid(String uuid) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(resources.getString(R.string.main_settings_uuid_key), uuid);
+        editor.apply();
     }
 
     public String getPhoneNo() {
@@ -66,6 +72,30 @@ public final class SettingsDataStore {
         editor.apply();
     }
 
+    public String getSidPersonalCode() {
+        return preferences.getString(resources.getString(R.string.main_settings_sid_personal_code_key),
+                "");
+    }
+
+    public void setSidPersonalCode(String personalCode) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(resources.getString(R.string.main_settings_sid_personal_code_key),
+                personalCode);
+        editor.apply();
+    }
+
+    public String getCountry() {
+        return preferences.getString(resources.getString(R.string.main_settings_smartid_country_key),
+                "EE");
+    }
+
+    public void setCountry(String country) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString(resources.getString(R.string.main_settings_smartid_country_key),
+                country);
+        editor.apply();
+    }
+
     @Nullable public Locale getLocale() {
         String locale = preferences.getString(KEY_LOCALE, null);
         if (locale != null) {
@@ -81,4 +111,25 @@ public final class SettingsDataStore {
             preferences.edit().putString(KEY_LOCALE, locale.getLanguage()).apply();
         }
     }
+
+    public Boolean getAlwaysSendCrashReport() {
+        return preferences.getBoolean(resources.getString(R.string.main_settings_crash_report_setting_key), false);
+    }
+
+    public void setAlwaysSendCrashReport(boolean alwaysSend) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean(resources.getString(R.string.main_settings_crash_report_setting_key), alwaysSend);
+        editor.apply();
+    }
+
+    public Boolean getShowSuccessNotification() {
+        return preferences.getBoolean(resources.getString(R.string.show_success_notification_key), true);
+    }
+
+    public void setShowSuccessNotification(boolean showSuccessNotification) {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean(resources.getString(R.string.show_success_notification_key), showSuccessNotification);
+        editor.apply();
+    }
+
 }

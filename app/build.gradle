@@ -1,4 +1,6 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.crashlytics'
 
 android {
     compileSdkVersion project.compileSdkVersion
@@ -21,6 +23,7 @@ android {
         buildConfigField 'String', 'PREFERENCE_V7_FIX_VERSION', "\"$preferenceV7FixVersion\""
         buildConfigField 'String', 'GUAVA_VERSION', "\"$guavaVersion\""
         buildConfigField 'String', 'OKIO_VERSION', "\"$okioVersion\""
+        buildConfigField 'String', 'COMMONS_IO_VERSION', "\"$commonsioVersion\""
         buildConfigField 'String', 'TIMBER_VERSION', "\"$timberVersion\""
         buildConfigField 'String', 'OK_HTTP_VERSION', "\"$okhttpVersion\""
         buildConfigField 'String', 'RETROFIT_VERSION', "\"$retrofitVersion\""
@@ -31,6 +34,7 @@ android {
         buildConfigField 'String', 'RX_JAVA_VERSION', "\"$rxJavaVersion\""
         buildConfigField 'String', 'RX_ANDROID_VERSION', "\"$rxAndroidVersion\""
         buildConfigField 'String', 'RX_BINDING_VERSION', "\"$rxBindingVersion\""
+        buildConfigField 'String', 'TELECOM_CHARSETS_VERSION', "\"$telecomcharsetsVersion\""
         buildConfigField 'String', 'AUTO_VALUE_VERSION', "\"$autoValueVersion\""
         buildConfigField 'String', 'AUTO_VALUE_PARCEL_VERSION', "\"$autoValueParcelVersion\""
         buildConfigField 'String', 'THREE_TEN_ABP_VERSION', "\"$threetenabpVersion\""
@@ -41,6 +45,7 @@ android {
         buildConfigField 'String', 'JUNIT_VERSION', "\"$junitVersion\""
         buildConfigField 'String', 'TRUTH_VERSION', "\"$truthVersion\""
         buildConfigField 'String', 'MOCKITO_VERSION', "\"$mockitoVersion\""
+        buildConfigField 'String', 'JACKSON_VERSION', "\"$jacksonVersion\""
     }
 
     signingConfigs {
@@ -51,13 +56,30 @@ android {
 
     buildTypes {
         debug {
+            debuggable true
             applicationIdSuffix '.debug'
+            signingConfig signingConfigs.debug
+            matchingFallbacks = ['debug']
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                    'proguard-rules.pro'
         }
         develop {
             debuggable true
             applicationIdSuffix '.develop'
             signingConfig signingConfigs.debug
             matchingFallbacks = ['debug']
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                    'proguard-rules.pro'
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                    'proguard-rules.pro'
         }
     }
 
@@ -71,29 +93,39 @@ android {
     }
 }
 
-dependencies {
-    implementation "com.android.support:support-annotations:${androidSupportLibraryVersion}"
-    implementation "com.android.support:support-v4:${androidSupportLibraryVersion}"
-    implementation "com.android.support:appcompat-v7:${androidSupportLibraryVersion}"
-    implementation "com.android.support:design:${androidSupportLibraryVersion}"
-    implementation "com.android.support:recyclerview-v7:${androidSupportLibraryVersion}"
-    implementation "com.android.support:cardview-v7:${androidSupportLibraryVersion}"
-    implementation "com.android.support:preference-v14:${androidSupportLibraryVersion}"
+configurations {
+    all {
+        exclude group: 'org.json', module: 'json'
+    }
+}
 
-    implementation "android.arch.lifecycle:viewmodel:${androidArchVersion}"
+dependencies {
+    implementation "androidx.annotation:annotation:${androidxVersion}"
+    implementation "androidx.legacy:legacy-support-v4:${androidxVersion}"
+    implementation "androidx.appcompat:appcompat:${androidxVersion}"
+    implementation "com.google.android.material:material:${androidMaterialVersion}"
+    implementation "androidx.recyclerview:recyclerview:${androidxVersion}"
+    implementation "androidx.cardview:cardview:${androidxVersion}"
+
+    implementation "androidx.lifecycle:lifecycle-viewmodel:${androidxLifecycleVersion}"
 
     implementation "com.takisoft.fix:preference-v7:${preferenceV7FixVersion}"
 
     implementation "com.google.guava:guava:${guavaVersion}"
     implementation "com.squareup.okio:okio:${okioVersion}"
 
+    implementation "commons-io:commons-io:${commonsioVersion}"
+
     implementation "com.jakewharton.timber:timber:${timberVersion}"
+    implementation 'org.slf4j:slf4j-api:1.7.25'
+    implementation "com.github.tony19:logback-android:2.0.0"
 
     implementation "org.bouncycastle:bcpkix-jdk15on:${bouncycastleVersion}"
 
     implementation "blue.aodev:material-values:${materialValuesVersion}"
 
     implementation "com.google.dagger:dagger:${daggerVersion}"
+    implementation "androidx.constraintlayout:constraintlayout:${androidxConstraintlayoutVersion}"
     annotationProcessor "com.google.dagger:dagger-compiler:${daggerVersion}"
 
     implementation "com.bluelinelabs:conductor:${conductorVersion}"
@@ -113,12 +145,17 @@ dependencies {
 
     implementation "net.cachapa.expandablelayout:expandablelayout:${expandablelayoutVersion}"
 
+    implementation platform("com.google.firebase:firebase-bom:${firebaseCrashlyticsVersion}")
+    implementation "com.google.firebase:firebase-crashlytics"
+
+
     implementation project(':common-lib')
     implementation project(':sign-lib')
     implementation project(':crypto-lib')
     implementation project(':smart-card-reader-lib')
     implementation project(':id-card-lib')
     implementation project(':mobile-id-lib')
+    implementation project(':smart-id-lib')
 
     testAnnotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
     testImplementation "junit:junit:${junitVersion}"

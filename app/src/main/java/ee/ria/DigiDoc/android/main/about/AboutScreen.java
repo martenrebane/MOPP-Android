@@ -1,9 +1,9 @@
 package ee.ria.DigiDoc.android.main.about;
 
-import android.support.annotation.NonNull;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +12,7 @@ import com.bluelinelabs.conductor.Controller;
 
 import ee.ria.DigiDoc.R;
 import ee.ria.DigiDoc.android.Application;
+import ee.ria.DigiDoc.android.accessibility.AccessibilityUtils;
 import ee.ria.DigiDoc.android.utils.ViewDisposables;
 import ee.ria.DigiDoc.android.utils.navigator.Screen;
 
@@ -34,6 +35,8 @@ public final class AboutScreen extends Controller implements Screen {
     @Override
     protected View onCreateView(@NonNull LayoutInflater inflater, @NonNull ViewGroup container) {
         View view = inflater.inflate(R.layout.main_about_screen, container, false);
+        AccessibilityUtils.setAccessibilityPaneTitle(view, R.string.main_about_title);
+
         Toolbar toolbarView = view.findViewById(R.id.toolbar);
         RecyclerView listView = view.findViewById(R.id.mainAboutList);
         listView.setLayoutManager(new LinearLayoutManager(container.getContext()));

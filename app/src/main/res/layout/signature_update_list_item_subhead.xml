@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:minHeight="@dimen/material_list_two_line_normal_height"
+        android:minHeight="@dimen/material_baseline_grid_7x"
         android:paddingTop="@dimen/material_list_normal_padding_vertical"
         android:paddingBottom="@dimen/material_list_normal_padding_vertical"
         android:gravity="center_vertical">
@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="@dimen/material_list_icon_last_position_margin_horizontal"
             android:src="@drawable/ic_add_circle"
-            android:contentDescription="@string/signature_update_documents_button"
+            android:contentDescription="@string/signature_update_documents_add_button_description"
             android:background="?attr/selectableItemBackgroundBorderless" />
 
     </LinearLayout>

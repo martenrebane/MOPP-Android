@@ -1,6 +1,6 @@
 package ee.ria.DigiDoc.android.crypto.create;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
@@ -14,6 +14,7 @@ import ee.ria.DigiDoc.android.utils.mvi.State;
 import ee.ria.DigiDoc.common.Certificate;
 import ee.ria.DigiDoc.crypto.CryptoContainer;
 import ee.ria.DigiDoc.crypto.Pin1InvalidException;
+import ee.ria.DigiDoc.sign.DataFile;
 
 interface Result extends MviResult<ViewState> {
 
@@ -100,6 +101,45 @@ interface Result extends MviResult<ViewState> {
     }
 
     @AutoValue
+    abstract class NameUpdateResult implements Result {
+
+        @Nullable abstract String name();
+
+        @Nullable abstract String newName();
+
+        abstract boolean inProgress();
+
+        @Nullable abstract Throwable error();
+
+        @Override
+        public ViewState reduce(ViewState state) {
+            return state.buildWith()
+                    .nameUpdateShowing(name() != null)
+                    .newName(newName())
+                    .nameUpdateInProgress(inProgress())
+                    .nameUpdateError(error())
+                    .build();
+        }
+
+        static NameUpdateResult show(String name) {
+            return create(name, null,false, null);
+        }
+
+        static NameUpdateResult progress(String newName) {
+            return create(null, newName, true, null);
+        }
+
+        static NameUpdateResult failure(String name, Throwable error) {
+            return create(name, null, false, error);
+        }
+
+        private static NameUpdateResult create(@Nullable String name, @Nullable String newName,
+                                               boolean inProgress, @Nullable Throwable error) {
+            return new AutoValue_Result_NameUpdateResult(name, newName, inProgress, error);
+        }
+    }
+
+    @AutoValue
     abstract class DataFilesAddResult implements Result {
 
         @State abstract String state();
@@ -147,13 +187,26 @@ interface Result extends MviResult<ViewState> {
 
         abstract ImmutableList<File> dataFiles();
 
+        @Nullable abstract File showConfirmation();
+
         @Override
         public ViewState reduce(ViewState state) {
-            return state.buildWith().dataFiles(dataFiles()).build();
+            return state.buildWith()
+                    .dataFiles(dataFiles())
+                    .dataFileRemoveConfirmation(showConfirmation())
+                    .build();
         }
 
-        static DataFileRemoveResult create(ImmutableList<File> dataFiles) {
-            return new AutoValue_Result_DataFileRemoveResult(dataFiles);
+        static DataFileRemoveResult confirmation(ImmutableList<File> dataFiles, File dataFile) {
+            return new AutoValue_Result_DataFileRemoveResult(dataFiles , dataFile);
+        }
+
+        static DataFileRemoveResult success(ImmutableList<File> dataFiles) {
+            return new AutoValue_Result_DataFileRemoveResult(dataFiles, null);
+        }
+
+        static DataFileRemoveResult clear(ImmutableList<File> dataFiles) {
+            return new AutoValue_Result_DataFileRemoveResult(dataFiles, null);
         }
     }
 

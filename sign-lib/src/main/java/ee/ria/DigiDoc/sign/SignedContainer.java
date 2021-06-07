@@ -1,6 +1,6 @@
 package ee.ria.DigiDoc.sign;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.Base64;
 import android.webkit.MimeTypeMap;
 
@@ -44,14 +44,6 @@ public abstract class SignedContainer {
     private static final String DEFAULT_MIME_TYPE = "text/plain";
 
     private static final String SIGNATURE_PROFILE_TS = "time-stamp";
-    private static final String SIGNATURE_PROFILE_TM = "time-mark";
-
-    private static final ImmutableMap<String, String> SIGNATURE_PROFILES =
-            ImmutableMap.<String, String>builder()
-                    .put("asice", SIGNATURE_PROFILE_TS)
-                    .put("sce", SIGNATURE_PROFILE_TS)
-                    .put("bdoc", SIGNATURE_PROFILE_TM)
-                    .build();
 
     public abstract File file();
 
@@ -66,7 +58,7 @@ public abstract class SignedContainer {
     }
 
     public final boolean dataFileRemoveEnabled() {
-        return dataFileAddEnabled() && dataFiles().size() != 1;
+        return dataFileAddEnabled();
     }
 
     public abstract ImmutableList<Signature> signatures();
@@ -93,34 +85,10 @@ public abstract class SignedContainer {
     }
 
     public final String signatureProfile() {
-        String extension = getFileExtension(file().getName());
-        ImmutableList<Signature> signatures = signatures();
-
-        if (signatures.size() == 1) {
-            if (extension.equals("bdoc")) {
-                return signatures.get(0).profile();
-            } else {
-                return SIGNATURE_PROFILE_TS;
-            }
-        } else if (signatures.size() > 1) {
-            boolean same = true;
-            String previous = null;
-            for (Signature signature : signatures) {
-                if (previous != null && !previous.equals(signature.profile())) {
-                    same = false;
-                    break;
-                }
-                previous = signature.profile();
-            }
-            if (same) {
-                return previous;
-            }
-        }
-
-        return SIGNATURE_PROFILES.get(extension);
+        return SIGNATURE_PROFILE_TS;
     }
 
-    public final SignedContainer addDataFiles(ImmutableList<File> dataFiles) throws IOException {
+    public final SignedContainer addDataFiles(ImmutableList<File> dataFiles) throws Exception {
         Container container = container(file());
         for (File dataFile : dataFiles) {
             container.addDataFile(dataFile.getAbsolutePath(), mimeType(dataFile));
@@ -129,15 +97,14 @@ public abstract class SignedContainer {
         return open(file());
     }
 
-    public final SignedContainer removeDataFile(DataFile dataFile) throws
-            ContainerDataFilesEmptyException, IOException {
+    public final SignedContainer removeDataFile(DataFile dataFile) throws Exception {
         Container container = container(file());
         if (container.dataFiles().size() == 1) {
             throw new ContainerDataFilesEmptyException();
         }
         DataFiles dataFiles = container.dataFiles();
         for (int i = 0; i < dataFile.size(); i++) {
-            if (dataFile.name().equals(dataFiles.get(i).fileName())) {
+            if (dataFile.id().equals(dataFiles.get(i).id())) {
                 container.removeDataFile(i);
                 break;
             }
@@ -146,37 +113,35 @@ public abstract class SignedContainer {
         return open(file());
     }
 
-    public final File getDataFile(DataFile dataFile, File directory) throws IOException {
+    public final File getDataFile(DataFile dataFile, File directory) throws Exception {
         Container container = container(file());
         File file = new File(directory, dataFile.name());
         DataFiles dataFiles = container.dataFiles();
         for (int i = 0; i < dataFiles.size(); i++) {
             ee.ria.libdigidocpp.DataFile containerDataFile = dataFiles.get(i);
-            if (dataFile.name().equals(containerDataFile.fileName())) {
+            if (dataFile.id().equals(containerDataFile.id())) {
                 containerDataFile.saveAs(file.getAbsolutePath());
                 return file;
             }
         }
-        throw new IllegalArgumentException("Could not find file " + dataFile.name() +
+        throw new IllegalArgumentException("Could not find file " + dataFile.id() +
                 " in container " + file());
     }
 
-    public final String calculateDataFileDigest(DataFile dataFile, String method) throws
-            IOException {
+    public final String calculateDataFileDigest(DataFile dataFile, String method) throws Exception {
         Container container = container(file());
         DataFiles dataFiles = container.dataFiles();
         for (int i = 0; i < dataFiles.size(); i++) {
             ee.ria.libdigidocpp.DataFile containerDataFile = dataFiles.get(i);
-            if (dataFile.name().equals(containerDataFile.fileName())) {
+            if (dataFile.id().equals(containerDataFile.id())) {
                 return Base64.encodeToString(containerDataFile.calcDigest(method), Base64.DEFAULT);
             }
         }
-        throw new IllegalArgumentException("Could not find file " + dataFile.name() +
+        throw new IllegalArgumentException("Could not find file " + dataFile.id() +
                 " in container " + file());
     }
 
-    public final SignedContainer addAdEsSignature(byte[] adEsSignature) throws
-            SignaturesLockedException, IOException {
+    public final SignedContainer addAdEsSignature(byte[] adEsSignature) throws Exception {
         Container container = container(file());
         try {
             container.addAdESSignature(adEsSignature);
@@ -190,17 +155,43 @@ public abstract class SignedContainer {
     public final SignedContainer sign(ByteString certificate,
                                       Function<ByteString, ByteString> signFunction) throws
             Exception {
-        Container container = container(file());
-        ee.ria.libdigidocpp.Signature signature = container
-                .prepareWebSignature(certificate.toByteArray(), signatureProfile());
-        ByteString signatureData = signFunction.apply(ByteString.of(signature.dataToSign()));
-        signature.setSignatureValue(signatureData.toByteArray());
-        signature.extendSignatureProfile(signatureProfile());
-        container.save();
-        return open(file());
+
+        try {
+            Container container = container(file());
+          
+            ee.ria.libdigidocpp.Signature signature = container
+                    .prepareWebSignature(certificate.toByteArray(), signatureProfile());
+            if (signature != null) {
+                ByteString signatureData = signFunction.apply(ByteString.of(signature.dataToSign()));
+                signature.setSignatureValue(signatureData.toByteArray());
+                signature.extendSignatureProfile(signatureProfile());
+                container.save();
+                return open(file());
+            }
+            throw new Exception("Empty signature value");
+        } catch (Exception e) {
+            if (e.getMessage() != null && e.getMessage().contains("Too Many Requests")) {
+                Timber.e(e, "Failed to sign with ID-card - Too Many Requests");
+                throw new TooManyRequestsException();
+            }
+            if (e.getMessage() != null && e.getMessage().contains("OCSP response not in valid time slot")) {
+                Timber.e(e, "Failed to sign with ID-card - OCSP response not in valid time slot");
+                throw new OcspInvalidTimeSlotException();
+            }
+            if (e.getMessage() != null && e.getMessage().contains("Certificate status: revoked")) {
+                Timber.e(e, "Failed to sign with ID-card - Certificate status: revoked");
+                throw new CertificateRevokedException();
+            }
+            if (e.getMessage() != null && e.getMessage().contains("Failed to connect")) {
+                Timber.e(e, "Failed to connect to Internet");
+                throw new NoInternetConnectionException();
+            }
+
+            throw e;
+        }
     }
 
-    public final SignedContainer removeSignature(Signature signature) throws IOException {
+    public final SignedContainer removeSignature(Signature signature) throws Exception {
         Container container = container(file());
         Signatures signatures = container.signatures();
         for (int i = 0; i < signatures.size(); i++) {
@@ -222,8 +213,7 @@ public abstract class SignedContainer {
      * @throws IOException When given paths are inaccessible.
      * @throws ContainerDataFilesEmptyException When no data files are given.
      */
-    public static SignedContainer create(File file, ImmutableList<File> dataFiles) throws
-            IOException, ContainerDataFilesEmptyException {
+    public static SignedContainer create(File file, ImmutableList<File> dataFiles) throws Exception {
         if (dataFiles == null || dataFiles.size() == 0) {
             throw new ContainerDataFilesEmptyException();
         }
@@ -250,7 +240,7 @@ public abstract class SignedContainer {
      * @return Signed container with data files and signatures.
      * @throws IOException When file could not be found/opened.
      */
-    public static SignedContainer open(File file) throws IOException {
+    public static SignedContainer open(File file) throws Exception {
         Container container = container(file);
 
         ImmutableList.Builder<DataFile> dataFileBuilder = ImmutableList.builder();
@@ -306,8 +296,8 @@ public abstract class SignedContainer {
     }
 
     private static DataFile dataFile(ee.ria.libdigidocpp.DataFile dataFile) {
-        return DataFile.create(dataFile.id(), dataFile.fileName(), dataFile.fileSize(),
-                dataFile.mediaType());
+        return DataFile.create(dataFile.id(), new File(dataFile.fileName()).getName(),
+                dataFile.fileSize(), dataFile.mediaType());
     }
 
     private static Signature signature(ee.ria.libdigidocpp.Signature signature) {
@@ -323,7 +313,7 @@ public abstract class SignedContainer {
         String commonName;
         try {
             commonName = Certificate.create(ByteString.of(signature.signingCertificateDer()))
-                    .commonName();
+                    .friendlyName();
         } catch (IOException e) {
             Timber.e(e, "Can't parse certificate to get CN");
             commonName = null;
@@ -345,17 +335,22 @@ public abstract class SignedContainer {
             return SignatureStatus.NON_QSCD;
         } else if (status == Validator.Status.Invalid.swigValue()) {
             return SignatureStatus.INVALID;
+        } else if (status == Validator.Status.Test.swigValue()) {
+            return SignatureStatus.TEST;
         } else {
             return SignatureStatus.UNKNOWN;
         }
     }
 
     @NonNull
-    private static Container container(File file) throws IOException {
+    private static Container container(File file) throws Exception {
         Container container;
         try {
             container = Container.open(file.getAbsolutePath());
         } catch (Exception e) {
+            if (e.getMessage().startsWith("Failed to connect to host")) {
+                throw new NoInternetConnectionException();
+            }
             throw new IOException(e.getMessage());
         }
         if (container == null) {

@@ -9,30 +9,19 @@
     <string name="main_home_menu_locale_ru">Русский язык</string>
     <string name="main_home_menu_locale_en">English</string>
 
+    <string name="main_settings_signature_add_method_key">signature_add_method</string>
+    <string name="main_settings_uuid_key">uuid</string>
     <string name="main_settings_phone_no_key">mobile_nr</string>
     <string name="main_settings_personal_code_key">personal_code</string>
+    <string name="main_settings_sid_personal_code_key">sid_personal_code</string>
+    <string name="main_settings_smartid_country_key">smartid_country</string>
+    <string name="main_settings_tsa_url_key">tsa_url</string>
     <string name="main_settings_role_key">mainSettingsRole</string>
     <string name="main_settings_city_key">mainSettingsCity</string>
     <string name="main_settings_county_key">mainSettingsCounty</string>
     <string name="main_settings_country_key">mainSettingsCountry</string>
     <string name="main_settings_postal_code_key">mainSettingsPostalCode</string>
-    <string name="main_settings_signature_profile_key">container_file_type</string>
-    <string name="main_settings_signature_profile_time_mark_key">time-mark</string>
-    <string name="main_settings_signature_profile_time_stamp_key">time-stamp</string>
-    <string-array name="main_settings_signature_profile_entry_values">
-        <item>@string/main_settings_signature_profile_time_mark_key</item>
-        <item>@string/main_settings_signature_profile_time_stamp_key</item>
-    </string-array>
-    <string-array name="main_settings_signature_profile_entries">
-        <item>BDOC</item>
-        <item>ASiC-E</item>
-    </string-array>
-    <string name="main_settings_file_type_bdoc_key">bdoc</string>
-    <string name="main_settings_file_type_asice_key">asice</string>
-    <string-array name="main_settings_file_type_entry_values">
-        <item>@string/main_settings_file_type_bdoc_key</item>
-        <item>@string/main_settings_file_type_asice_key</item>
-    </string-array>
+    <string name="main_settings_open_all_filetypes_key">mainSettingsOpenAllFilesTypes</string>
 
     <string name="signature_add_mobile_id_challenge_placeholder">____</string>
 
@@ -73,6 +62,10 @@
     <string name="main_about_junit_title">JUnit %1$s</string>
     <string name="main_about_truth_title">Google Truth %1$s</string>
     <string name="main_about_mockito_title">Mockito %1$s</string>
+    <string name="main_about_acs_title">ACS Smart Card Android Library %1$s</string>
+    <string name="main_about_acs_license_url">http://www.acs.com.hk</string>
+    <string name="main_about_identiv_title">Android CCID Library %1$s</string>
+    <string name="main_about_identiv_license_url">https://www.identiv.com/</string>
     <string name="main_about_apache_2_license_title">Apache Software License, Version 2.0</string>
     <string name="main_about_apache_2_license_url">https://www.apache.org/licenses/LICENSE-2.0</string>
     <string name="main_about_mit_license_title">MIT License</string>
@@ -84,9 +77,24 @@
     <string name="main_about_lgpl_license_url">https://www.gnu.org/copyleft/lesser.html</string>
     <string name="main_about_lgpl_2_1_license_title">GNU Lesser General Public License Version 2.1</string>
     <string name="main_about_lgpl_2_1_license_url">https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html</string>
+    <string name="main_about_jackson_core_title">jackson-core %1$s</string>
+    <string name="main_about_jackson_core_license_url">https://github.com/FasterXML/jackson-core/blob/master/LICENSE</string>
+    <string name="main_about_jackson_databind_title">jackson-databind %1$s</string>
+    <string name="main_about_jackson_databind_license_url">https://github.com/FasterXML/jackson-databind/blob/master/LICENSE</string>
+    <string name="main_about_apache_2_0_license_title">Apache License 2.0</string>
+    <string name="main_about_mid_rest_api_java_title">mid-rest-java-client %1$s</string>
+    <string name="main_about_mid_rest_api_java_license_url">https://github.com/SK-EID/mid-rest-java-client/blob/master/LICENSE</string>
+    <string name="main_about_commons_io_title">Apache Commons IO</string>
+    <string name="main_about_commons_io_license_url">https://github.com/apache/commons-io/blob/master/LICENSE.txt</string>
+    <string name="main_about_telecom_charsets_title">telecom-charsets</string>
+    <string name="main_about_telecom_charsets_license_url">https://github.com/brake/telecom-charsets/blob/master/LICENSE</string>
 
     <!-- EID Home -->
     <string name="eid_home_certificate_pin_auth">PIN1</string>
     <string name="eid_home_certificate_pin_sign">PIN2</string>
+
+    <string name="main_settings_crash_report_setting_key">crash_seport_setting</string>
+
+    <string name="show_success_notification_key">show_success_notification</string>
 
 </resources>

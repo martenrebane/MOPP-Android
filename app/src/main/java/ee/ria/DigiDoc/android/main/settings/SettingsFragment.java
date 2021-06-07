@@ -1,18 +1,24 @@
 package ee.ria.DigiDoc.android.main.settings;
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
-import android.support.v7.preference.ListPreference;
-import android.support.v7.preference.Preference;
-import android.support.v7.preference.PreferenceManager;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.preference.ListPreference;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceManager;
+
 import android.text.TextUtils;
 
-import com.takisoft.fix.support.v7.preference.PreferenceFragmentCompatDividers;
+import com.takisoft.fix.support.v7.preference.EditTextPreference;
+import com.takisoft.fix.support.v7.preference.EditTextPreferenceDialogFragmentCompat;
+import com.takisoft.fix.support.v7.preference.PreferenceFragmentCompat;
 
 import ee.ria.DigiDoc.R;
+import ee.ria.DigiDoc.android.accessibility.AccessibilityUtils;
 
-public final class SettingsFragment extends PreferenceFragmentCompatDividers {
+import static android.view.accessibility.AccessibilityEvent.TYPE_ANNOUNCEMENT;
+
+public final class SettingsFragment extends PreferenceFragmentCompat {
 
     private final Preference.OnPreferenceChangeListener summaryChangeListener
             = (preference, newValue) -> {
@@ -31,22 +37,24 @@ public final class SettingsFragment extends PreferenceFragmentCompatDividers {
     @Override
     public void onCreatePreferencesFix(@Nullable Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.main_settings, null);
-        bindSummary(R.string.main_settings_phone_no_key);
-        bindSummary(R.string.main_settings_personal_code_key);
+//        bindSummary(R.string.main_settings_phone_no_key);
+//        bindSummary(R.string.main_settings_personal_code_key);
+//        bindSummary(R.string.main_settings_uuid_key);
 //        bindSummary(R.string.main_settings_role_key);
 //        bindSummary(R.string.main_settings_city_key);
 //        bindSummary(R.string.main_settings_county_key);
 //        bindSummary(R.string.main_settings_country_key);
 //        bindSummary(R.string.main_settings_postal_code_key);
-        bindSummary(R.string.main_settings_signature_profile_key);
     }
 
     private void bindSummary(@StringRes int key) {
         String preferenceKey = getString(key);
         Preference preference = findPreference(preferenceKey);
-        preference.setOnPreferenceChangeListener(summaryChangeListener);
-        preference.callChangeListener(PreferenceManager.getDefaultSharedPreferences(getContext())
-                .getString(preferenceKey, null));
+        if (preference != null) {
+            preference.setOnPreferenceChangeListener(summaryChangeListener);
+            preference.callChangeListener(PreferenceManager.getDefaultSharedPreferences(getContext())
+                    .getString(preferenceKey, null));
+        }
     }
 
     @Nullable
@@ -59,5 +67,15 @@ public final class SettingsFragment extends PreferenceFragmentCompatDividers {
             }
         }
         return null;
+    }
+
+
+    @Override
+    public void onDisplayPreferenceDialog(Preference preference) {
+        if (preference instanceof TsaUrlPreference) {
+            displayPreferenceDialog(new TsaUrlPreferenceDialogFragment(), preference.getKey());
+        } else if (preference instanceof UUIDPreference) {
+            displayPreferenceDialog(new UUIDPreferenceDialogFragment(), preference.getKey());
+        }
     }
 }

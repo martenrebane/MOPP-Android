@@ -1,4 +1,7 @@
+import ee.ria.DigiDoc.android.LibdigidocppPlugin
+
 apply plugin: 'com.android.library'
+apply plugin: LibdigidocppPlugin
 
 android {
     compileSdkVersion project.compileSdkVersion
@@ -19,8 +22,10 @@ android {
 }
 
 dependencies {
-    api "com.android.support:support-annotations:${androidSupportLibraryVersion}"
+    api "androidx.annotation:annotation:${androidxVersion}"
     api "com.squareup.okio:okio:${okioVersion}"
+
+    implementation "com.github.brake.threegpp:telecom-charsets:${telecomcharsetsVersion}"
 
     implementation "com.google.auto.value:auto-value-annotations:${autoValueVersion}"
     annotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
@@ -28,6 +33,8 @@ dependencies {
     api "org.bouncycastle:bcpkix-jdk15on:${bouncycastleVersion}"
 
     api "com.jakewharton.threetenabp:threetenabp:${threetenabpVersion}"
+
+    api files('libs/libdigidocpp.jar')
 
     testImplementation "junit:junit:${junitVersion}"
     testImplementation "com.google.truth:truth:${truthVersion}"

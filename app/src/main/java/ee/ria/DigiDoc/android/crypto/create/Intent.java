@@ -1,6 +1,6 @@
 package ee.ria.DigiDoc.android.crypto.create;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
@@ -23,6 +23,30 @@ interface Intent extends MviIntent, MviAction {
         static InitialIntent create(@Nullable File containerFile,
                                     @Nullable android.content.Intent intent) {
             return new AutoValue_Intent_InitialIntent(containerFile, intent);
+        }
+    }
+
+    @AutoValue
+    abstract class NameUpdateIntent implements Intent {
+
+        @Nullable abstract String name();
+
+        @Nullable abstract String newName();
+
+        static NameUpdateIntent show(String name) {
+            return create(name, null);
+        }
+
+        static NameUpdateIntent update(String oldName, String newName) {
+            return create(oldName, newName);
+        }
+
+        static NameUpdateIntent clear() {
+            return create(null, null);
+        }
+
+        private static NameUpdateIntent create(String name, String newName) {
+            return new AutoValue_Intent_NameUpdateIntent(name, newName);
         }
     }
 
@@ -55,12 +79,38 @@ interface Intent extends MviIntent, MviAction {
     @AutoValue
     abstract class DataFileRemoveIntent implements Intent {
 
+        abstract boolean showConfirmation();
+
+        @Nullable abstract File containerFile();
+
         abstract ImmutableList<File> dataFiles();
+
+        @Nullable abstract File dataFile();
+
+        static DataFileRemoveIntent showConfirmation(ImmutableList<File> dataFiles, File dataFile) {
+            return create(true, null,  dataFiles, dataFile);
+        }
+
+        static DataFileRemoveIntent remove(File containerFile, ImmutableList<File> dataFiles, File dataFile) {
+            return create(false, containerFile, dataFiles, dataFile);
+        }
+
+        static DataFileRemoveIntent clear(ImmutableList<File> dataFiles) {
+            return create(false, null, dataFiles, null);
+        }
+
+        private static DataFileRemoveIntent create(boolean showConfirmation, File containerFile, ImmutableList<File> dataFiles, File dataFile) {
+            return new AutoValue_Intent_DataFileRemoveIntent(showConfirmation,containerFile, dataFiles, dataFile);
+        }
+    }
+
+    @AutoValue
+    abstract class DataFileSaveIntent implements Intent {
 
         abstract File dataFile();
 
-        static DataFileRemoveIntent create(ImmutableList<File> dataFiles, File dataFile) {
-            return new AutoValue_Intent_DataFileRemoveIntent(dataFiles, dataFile);
+        static DataFileSaveIntent create(File dataFile) {
+            return new AutoValue_Intent_DataFileSaveIntent(dataFile);
         }
     }
 

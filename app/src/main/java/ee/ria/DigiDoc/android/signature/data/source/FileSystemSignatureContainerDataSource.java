@@ -2,13 +2,17 @@ package ee.ria.DigiDoc.android.signature.data.source;
 
 import com.google.common.collect.ImmutableList;
 
+import org.apache.commons.io.FilenameUtils;
+
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import javax.inject.Inject;
 
-import ee.ria.DigiDoc.android.main.settings.SettingsDataStore;
 import ee.ria.DigiDoc.android.signature.data.ContainerAdd;
 import ee.ria.DigiDoc.android.signature.data.SignatureContainerDataSource;
 import ee.ria.DigiDoc.android.utils.files.FileStream;
@@ -20,16 +24,14 @@ import io.reactivex.Completable;
 import io.reactivex.Single;
 
 import static com.google.common.io.Files.getNameWithoutExtension;
+import static ee.ria.DigiDoc.android.Constants.SIGNATURE_CONTAINER_EXT;
 
 public final class FileSystemSignatureContainerDataSource implements SignatureContainerDataSource {
 
     private final FileSystem fileSystem;
-    private final SettingsDataStore settingsDataStore;
 
-    @Inject FileSystemSignatureContainerDataSource(FileSystem fileSystem,
-                                                   SettingsDataStore settingsDataStore) {
+    @Inject FileSystemSignatureContainerDataSource(FileSystem fileSystem) {
         this.fileSystem = fileSystem;
-        this.settingsDataStore = settingsDataStore;
     }
 
     @Override
@@ -50,8 +52,8 @@ public final class FileSystemSignatureContainerDataSource implements SignatureCo
                 containerFile = fileSystem.addSignatureContainer(fileStream);
             } else {
                 String containerName = String.format(Locale.US, "%s.%s",
-                        getNameWithoutExtension(fileStreams.get(0).displayName()),
-                        settingsDataStore.getFileType());
+                        getNameWithoutExtension(FilenameUtils.getName(fileStreams.get(0).displayName())),
+                        SIGNATURE_CONTAINER_EXT);
                 isExistingContainer = false;
                 containerFile = fileSystem.generateSignatureContainerFile(containerName);
                 SignedContainer.create(containerFile, cacheFileStreams(fileStreams));
@@ -77,7 +79,7 @@ public final class FileSystemSignatureContainerDataSource implements SignatureCo
         return Single.fromCallable(() ->
                 SignedContainer
                         .open(containerFile)
-                        .addDataFiles(cacheFileStreams(documentStreams)));
+                        .addDataFiles(cacheFileStreams(getContainerFiles(containerFile, documentStreams))));
     }
 
     @Override
@@ -109,7 +111,44 @@ public final class FileSystemSignatureContainerDataSource implements SignatureCo
         return Single.fromCallable(() ->
                 SignedContainer
                         .open(containerFile)
-                        .addAdEsSignature(signature.getBytes()));
+                        .addAdEsSignature(signature.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    private ImmutableList<FileStream> getContainerFiles(File containerFile, ImmutableList<FileStream> documentStreams) throws Exception {
+        ImmutableList.Builder<FileStream> fileStreamList = ImmutableList.builder();
+        List<String> fileNamesInContainer = getFileNamesInContainer(containerFile);
+        List<String> fileNamesToAdd = getFileNamesToAddToContainer(documentStreams);
+        for (int i = 0; i < fileNamesToAdd.size(); i++) {
+            if (!fileNamesInContainer.contains(fileNamesToAdd.get(i))) {
+                fileStreamList.add(documentStreams.get(i));
+            }
+        }
+
+        if (fileStreamList.build().isEmpty()) {
+            return documentStreams;
+        }
+
+        return fileStreamList.build();
+    }
+
+    private List<String> getFileNamesInContainer(File containerFile) throws Exception {
+        List<String> containerFileNames = new ArrayList<>();
+        ImmutableList<DataFile> dataFiles = SignedContainer.open(containerFile).dataFiles();
+
+        for (int i = 0; i < dataFiles.size(); i++) {
+            containerFileNames.add(dataFiles.get(i).name());
+        }
+
+        return containerFileNames;
+    }
+
+    private List<String> getFileNamesToAddToContainer(ImmutableList<FileStream> documentStreams) {
+        List<String> documentNamesToAdd = new ArrayList<>();
+        for (FileStream fileStream : documentStreams) {
+            documentNamesToAdd.add(fileStream.displayName());
+        }
+
+        return documentNamesToAdd;
     }
 
     private ImmutableList<File> cacheFileStreams(ImmutableList<FileStream> fileStreams) throws

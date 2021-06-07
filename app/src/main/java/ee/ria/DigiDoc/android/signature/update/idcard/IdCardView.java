@@ -1,26 +1,32 @@
 package ee.ria.DigiDoc.android.signature.update.idcard;
 
 import android.content.Context;
-import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.accessibility.AccessibilityEvent;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
+
 import ee.ria.DigiDoc.R;
+import ee.ria.DigiDoc.android.accessibility.AccessibilityUtils;
 import ee.ria.DigiDoc.android.model.idcard.IdCardData;
 import ee.ria.DigiDoc.android.model.idcard.IdCardDataResponse;
 import ee.ria.DigiDoc.android.model.idcard.IdCardSignResponse;
 import ee.ria.DigiDoc.android.signature.update.SignatureAddView;
 import ee.ria.DigiDoc.android.signature.update.SignatureUpdateViewModel;
+import ee.ria.DigiDoc.android.signature.update.mobileid.MobileIdResponse;
 import ee.ria.DigiDoc.android.utils.mvi.State;
 import ee.ria.DigiDoc.idcard.Token;
+import ee.ria.DigiDoc.mobileid.dto.response.MobileCreateSignatureSessionStatusResponse;
 import ee.ria.DigiDoc.smartcardreader.SmartCardReaderStatus;
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 
+import static android.view.accessibility.AccessibilityEvent.TYPE_ANNOUNCEMENT;
 import static com.jakewharton.rxbinding2.widget.RxTextView.afterTextChangeEvents;
 import static ee.ria.DigiDoc.android.Constants.VOID;
 
@@ -74,6 +80,7 @@ public final class IdCardView extends LinearLayout implements
     @Override
     public void reset(@Nullable SignatureUpdateViewModel viewModel) {
         signPin2View.setText(null);
+        progressMessageView.setContentDescription(null);
     }
 
     @Override
@@ -114,11 +121,14 @@ public final class IdCardView extends LinearLayout implements
                     R.string.signature_update_id_card_sign_data, data.personalData().givenNames(),
                     data.personalData().surname(), data.personalData().personalCode()));
             signPin2ErrorView.setVisibility(VISIBLE);
+            signPin2ErrorView.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED);
             if (pinRetryCount == 1) {
                 signPin2ErrorView.setText(
                         R.string.signature_update_id_card_sign_pin2_invalid_final);
             } else {
                 signPin2ErrorView.setText(getResources().getString(
+                        R.string.signature_update_id_card_sign_pin2_invalid, pinRetryCount));
+                signPin2ErrorView.setContentDescription(getResources().getString(
                         R.string.signature_update_id_card_sign_pin2_invalid, pinRetryCount));
             }
         } else if (dataResponse != null && data != null) {
@@ -144,6 +154,16 @@ public final class IdCardView extends LinearLayout implements
             progressContainerView.setVisibility(VISIBLE);
             progressMessageView.setText(R.string.signature_update_id_card_progress_message_initial);
             signContainerView.setVisibility(GONE);
+        }
+
+        if (progressContainerView.getVisibility() == VISIBLE) {
+            AccessibilityUtils.sendAccessibilityEvent(getContext(), TYPE_ANNOUNCEMENT, progressMessageView.getText());
+        }
+        if (signContainerView.getVisibility() == VISIBLE) {
+            String readyToSignDesc = getResources().getString(R.string.signature_update_id_card_sign_message);
+            CharSequence signerInfo = signDataView.getText();
+            String enterPin2Desc = getResources().getString(R.string.signature_update_id_card_sign_pin2);
+            AccessibilityUtils.sendAccessibilityEvent(getContext(), TYPE_ANNOUNCEMENT, readyToSignDesc, signerInfo, enterPin2Desc);
         }
     }
 }

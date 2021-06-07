@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:text="@string/signature_update_smart_id_message" />
+
+        <TextView
+            android:id="@+id/signatureUpdateSmartIdCountryText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:layout_marginTop="11dp"
+            android:layout_marginStart="4dp"
+            android:text="@string/signature_update_smart_id_country"
+            android:importantForAccessibility="1"
+            android:accessibilityTraversalBefore="@id/signatureUpdateSmartIdCountryLabel"
+            android:paddingTop="1px"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/signatureUpdateSmartIdCountryLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:importantForAccessibility="1"
+            android:minHeight="@dimen/material_baseline_grid_6x"
+            android:accessibilityTraversalAfter="@id/signatureUpdateSmartIdCountryText">
+
+            <Spinner
+                android:id="@+id/signatureUpdateSmartIdCountry"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:entries="@array/smart_id_country"
+                android:minHeight="@dimen/material_baseline_grid_6x"
+                android:importantForAccessibility="1" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/signatureUpdateSmartIdPersonalCodeText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:layout_marginTop="11dp"
+            android:layout_marginStart="4dp"
+            android:text="@string/signature_update_mobile_id_personal_code"
+            android:importantForAccessibility="1"
+            android:accessibilityTraversalAfter="@id/signatureUpdateSmartIdCountryLabel"
+            android:accessibilityTraversalBefore="@id/signatureUpdateSmartIdPersonalCodeLabel" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/signatureUpdateSmartIdPersonalCodeLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:layout_marginTop="-10dp"
+            android:minHeight="@dimen/material_baseline_grid_6x"
+            android:importantForAccessibility="1">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/signatureUpdateSmartIdPersonalCode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:importantForAccessibility="1"
+                android:inputType="number"
+                android:minHeight="@dimen/material_baseline_grid_6x"
+                android:maxLength="11" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <CheckBox
+            android:id="@+id/signatureUpdateSmartIdRememberMe"
+            android:layout_width="200dp"
+            android:layout_height="@dimen/material_baseline_grid_6x"
+            android:checked="false"
+            android:text="@string/signature_update_mobile_id_remember_me" />
+
+
+    </LinearLayout>
+
+</ScrollView>

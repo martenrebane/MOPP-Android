@@ -1,8 +1,9 @@
 package ee.ria.DigiDoc.android.signature.update;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 
 import java.io.File;
 
@@ -13,6 +14,7 @@ import ee.ria.DigiDoc.sign.DataFile;
 import ee.ria.DigiDoc.sign.Signature;
 
 import static ee.ria.DigiDoc.android.Constants.RC_SIGNATURE_UPDATE_DOCUMENTS_ADD;
+import static ee.ria.DigiDoc.android.Constants.SAVE_FILE;
 import static ee.ria.DigiDoc.android.utils.IntentUtils.createGetContentIntent;
 
 interface Action extends MviAction {
@@ -54,12 +56,13 @@ interface Action extends MviAction {
 
         @Nullable abstract File containerFile();
 
+        abstract ImmutableList<DataFile> documents();
+
         @Nullable abstract DataFile document();
 
         static DocumentRemoveAction create(boolean showConfirmation, @Nullable File containerFile,
-                                           @Nullable DataFile document) {
-            return new AutoValue_Action_DocumentRemoveAction(showConfirmation, containerFile,
-                    document);
+                                           ImmutableList<DataFile> documents, @Nullable DataFile document) {
+            return new AutoValue_Action_DocumentRemoveAction(showConfirmation, containerFile, documents, document);
         }
     }
 

@@ -1,11 +1,11 @@
 package ee.ria.DigiDoc.android.signature.list;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +16,7 @@ import java.io.File;
 
 import ee.ria.DigiDoc.R;
 import ee.ria.DigiDoc.android.Application;
+import ee.ria.DigiDoc.android.accessibility.AccessibilityUtils;
 import ee.ria.DigiDoc.android.utils.ViewDisposables;
 import ee.ria.DigiDoc.android.utils.mvi.MviView;
 import ee.ria.DigiDoc.android.utils.navigator.Screen;
@@ -24,6 +25,7 @@ import io.reactivex.Observable;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
+import static android.view.accessibility.AccessibilityEvent.TYPE_ANNOUNCEMENT;
 import static com.jakewharton.rxbinding2.support.v7.widget.RxToolbar.navigationClicks;
 
 public final class SignatureListScreen extends Controller implements Screen,
@@ -72,7 +74,12 @@ public final class SignatureListScreen extends Controller implements Screen,
                         .map(ignored -> Intent.ContainerRemoveIntent
                                 .remove(removeConfirmationContainerFile)),
                 removeConfirmationDialog.cancels()
-                        .map(ignored -> Intent.ContainerRemoveIntent.cancel()));
+                        .map(ignored -> {
+                            if (getApplicationContext() != null) {
+                                AccessibilityUtils.sendAccessibilityEvent(getApplicationContext(), TYPE_ANNOUNCEMENT, R.string.document_removal_cancelled);
+                            }
+                            return Intent.ContainerRemoveIntent.cancel();
+                        }));
     }
 
     private Observable<Intent.RefreshIntent> refreshIntent() {
@@ -130,8 +137,10 @@ public final class SignatureListScreen extends Controller implements Screen,
     @Override
     protected View onCreateView(@NonNull LayoutInflater inflater, @NonNull ViewGroup container) {
         removeConfirmationDialog = new ConfirmationDialog(container.getContext(),
-                R.string.signature_list_remove_confirmation_message);
+                R.string.signature_list_remove_confirmation_message, R.id.documentRemovalDialog);
         View view = inflater.inflate(R.layout.signature_list_screen, container, false);
+        AccessibilityUtils.setAccessibilityPaneTitle(view, R.string.signature_list_title);
+
         toolbarView = view.findViewById(R.id.toolbar);
         listView = view.findViewById(R.id.signatureList);
         listView.setLayoutManager(new LinearLayoutManager(container.getContext()));

@@ -1,0 +1,70 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion project.compileSdkVersion
+
+    defaultConfig {
+        minSdkVersion project.minSdkVersion
+        targetSdkVersion project.targetSdkVersion
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        testInstrumentationRunnerArguments clearPackageData: 'true'
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+}
+
+dependencies {
+    api "org.bouncycastle:bcpkix-jdk15on:${bouncycastleVersion}"
+    api "com.squareup.okhttp3:okhttp:${okhttpVersion}"
+    api "org.json:json:${jsonVersion}"
+
+    implementation 'androidx.core:core:1.0.0'
+    implementation "com.jakewharton.timber:timber:${timberVersion}"
+    implementation "com.google.auto.value:auto-value-annotations:${autoValueVersion}"
+    annotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
+    annotationProcessor "com.ryanharter.auto.value:auto-value-parcel:${autoValueParcelVersion}"
+
+    testImplementation "junit:junit:${junitVersion}"
+    testImplementation "org.mockito:mockito-core:${mockitoVersion}"
+    testImplementation "org.json:json:${jsonVersion}"
+
+    androidTestUtil "androidx.test:orchestrator:${androidxTestVersion}"
+    androidTestAnnotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
+    androidTestImplementation "androidx.annotation:annotation:${androidxVersion}"
+    androidTestImplementation "androidx.test.ext:junit:${androidxTestVersion}"
+    androidTestImplementation "androidx.test:rules:${androidxTestVersion}"
+    androidTestImplementation "androidx.test.espresso:espresso-core:${androidxTestEspressoVersion}"
+    androidTestImplementation "com.google.truth:truth:${truthVersion}"
+}
+
+configurations {
+    generateMatchers { extendsFrom api }
+}
+
+task fetchAndPackageDefaultConfiguration(type: JavaExec, dependsOn: build) {
+    classpath files(getBuildDir().toString() + "/intermediates/javac/release/compileReleaseJavaWithJavac/classes")
+    classpath configurations.generateMatchers
+    main = 'ee.ria.DigiDoc.configuration.task.FetchAndPackageDefaultConfigurationTask'
+    doLast {
+        copy {
+            from file("${projectDir}/src/main/assets/config")
+            into file("${buildDir}/intermediates/library_assets/debug/out/config")
+        }
+        copy {
+            from file("${projectDir}/src/main/assets/config")
+            into file("${buildDir}/intermediates/library_assets/release/out/config")
+        }
+    }
+}

@@ -1,9 +1,10 @@
 package ee.ria.DigiDoc.android.main.about;
 
 import android.content.res.Resources;
-import android.support.annotation.NonNull;
-import android.support.annotation.StringRes;
-import android.support.v7.widget.RecyclerView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -174,6 +175,46 @@ final class AboutAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     BuildConfig.MOCKITO_VERSION,
                     R.string.main_about_mit_license_title,
                     R.string.main_about_mit_license_url))
+            .add(Component.create(
+                    R.string.main_about_acs_title,
+                    "1.1.4",
+                    R.string.main_about_terms_and_conditions,
+                    R.string.main_about_acs_license_url))
+            .add(Component.create(
+                    R.string.main_about_identiv_title,
+                    "1.2",
+                    R.string.main_about_terms_and_conditions,
+                    R.string.main_about_identiv_license_url))
+            .add(Component.create(
+                    R.string.main_about_jackson_core_title,
+                    BuildConfig.JACKSON_VERSION,
+                    R.string.main_about_apache_2_0_license_title,
+                    R.string.main_about_jackson_core_license_url
+            ))
+            .add(Component.create(
+                    R.string.main_about_jackson_databind_title,
+                    BuildConfig.JACKSON_VERSION,
+                    R.string.main_about_apache_2_0_license_title,
+                    R.string.main_about_jackson_databind_license_url
+            ))
+            .add(Component.create(
+                    R.string.main_about_mid_rest_api_java_title,
+                    "1.1",
+                    R.string.main_about_mit_license_title,
+                    R.string.main_about_mid_rest_api_java_license_url
+            ))
+            .add(Component.create(
+                    R.string.main_about_commons_io_title,
+                    BuildConfig.COMMONS_IO_VERSION,
+                    R.string.main_about_mit_license_title,
+                    R.string.main_about_commons_io_license_url
+            ))
+            .add(Component.create(
+                    R.string.main_about_telecom_charsets_title,
+                    BuildConfig.TELECOM_CHARSETS_VERSION,
+                    R.string.main_about_apache_2_0_license_title,
+                    R.string.main_about_telecom_charsets_license_url
+            ))
             .build();
 
     @NonNull

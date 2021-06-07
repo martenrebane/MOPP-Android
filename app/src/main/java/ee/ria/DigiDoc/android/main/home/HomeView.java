@@ -3,8 +3,9 @@ package ee.ria.DigiDoc.android.main.home;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Parcelable;
-import android.support.annotation.Nullable;
-import android.support.design.widget.BottomNavigationView;
+import androidx.annotation.Nullable;
+import com.google.android.material.bottomnavigation.BottomNavigationItemView;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import android.util.SparseArray;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -60,6 +61,14 @@ public final class HomeView extends LinearLayout implements MviView<Intent, View
         inflate(context, R.layout.main_home, this);
         navigationContainerView = findViewById(R.id.mainHomeNavigationContainer);
         navigationView = findViewById(R.id.mainHomeNavigation);
+
+        BottomNavigationItemView signatureItem = findViewById(R.id.mainHomeNavigationSignature);
+        BottomNavigationItemView cryptoItem = findViewById(R.id.mainHomeNavigationCrypto);
+        BottomNavigationItemView eidItem = findViewById(R.id.mainHomeNavigationEID);
+        signatureItem.setContentDescription(getResources().getString(R.string.signature_content_description, 1, 3));
+        cryptoItem.setContentDescription(getResources().getString(R.string.crypto_content_description, 2, 3));
+        eidItem.setContentDescription(getResources().getString(R.string.my_eid_content_description, 3, 3));
+
         menuDialog = new HomeMenuDialog(context);
         menuView = menuDialog.getMenuView();
         viewModel = Application.component(context).navigator().viewModel(screenId,

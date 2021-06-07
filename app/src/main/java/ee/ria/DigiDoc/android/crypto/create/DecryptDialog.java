@@ -3,25 +3,32 @@ package ee.ria.DigiDoc.android.crypto.create;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AlertDialog;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.accessibility.AccessibilityEvent;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import ee.ria.DigiDoc.R;
+import ee.ria.DigiDoc.android.accessibility.AccessibilityUtils;
 import ee.ria.DigiDoc.android.model.idcard.IdCardData;
 import ee.ria.DigiDoc.android.model.idcard.IdCardDataResponse;
+import ee.ria.DigiDoc.android.utils.SecureUtil;
+import ee.ria.DigiDoc.android.utils.ViewDisposables;
 import ee.ria.DigiDoc.android.utils.mvi.State;
 import ee.ria.DigiDoc.crypto.Pin1InvalidException;
+import ee.ria.DigiDoc.idcard.Token;
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 
+import static android.view.accessibility.AccessibilityEvent.TYPE_ANNOUNCEMENT;
 import static com.jakewharton.rxbinding2.view.RxView.clicks;
+import static com.jakewharton.rxbinding2.widget.RxTextView.afterTextChangeEvents;
 
 final class DecryptDialog extends AlertDialog {
 
@@ -34,8 +41,13 @@ final class DecryptDialog extends AlertDialog {
     private final EditText pin1View;
     private final TextView pin1ErrorView;
 
+    private final ViewDisposables disposables = new ViewDisposables();
+
+    private Token token = null;
+
     DecryptDialog(@NonNull Context context) {
         super(context);
+        SecureUtil.markAsSecure(getWindow());
         TypedArray a = context.obtainStyledAttributes(new int[]{R.attr.dialogPreferredPadding});
         int padding = a.getDimensionPixelSize(0, 0);
         a.recycle();
@@ -54,12 +66,17 @@ final class DecryptDialog extends AlertDialog {
                 getContext().getString(R.string.crypto_create_decrypt_positive_button),
                 (OnClickListener) null);
         setButton(BUTTON_NEGATIVE, getContext().getString(android.R.string.cancel),
-                (dialog, which) -> cancel());
+                (dialog, which) -> {
+                    cancel();
+                    AccessibilityUtils.sendAccessibilityEvent(context, AccessibilityEvent.TYPE_ANNOUNCEMENT, R.string.file_decryption_cancelled);
+                }
+        );
     }
 
     void idCardDataResponse(IdCardDataResponse idCardDataResponse, @State String decryptState,
                             @Nullable Throwable decryptError) {
         IdCardData data = idCardDataResponse.data();
+        token = idCardDataResponse.token();
 
         if (decryptState.equals(State.CLEAR)) {
             pin1View.setText(null);
@@ -100,6 +117,7 @@ final class DecryptDialog extends AlertDialog {
                             R.string.crypto_create_decrypt_pin1_invalid, pin1RetryCount));
                 }
                 pin1ErrorView.setVisibility(View.VISIBLE);
+                pin1ErrorView.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED);
             } else {
                 pin1ErrorView.setVisibility(View.GONE);
             }
@@ -109,6 +127,23 @@ final class DecryptDialog extends AlertDialog {
                     data.personalData().givenNames(), data.personalData().surname(),
                     data.personalData().personalCode()));
         }
+
+        if (progressContainerView.getVisibility() == View.VISIBLE) {
+            AccessibilityUtils.sendAccessibilityEvent(getContext(), TYPE_ANNOUNCEMENT, progressMessageView.getText());
+        }
+        
+        if (pin1ErrorView.getVisibility() == View.VISIBLE) {
+            AccessibilityUtils.sendAccessibilityEvent(getContext(), TYPE_ANNOUNCEMENT, pin1ErrorView.getText());
+        } else if (containerView.getVisibility() == View.VISIBLE) {
+            String readyToSignDesc = containerView.getResources().getString(R.string.crypto_create_decrypt_message);
+            if (data != null) {
+                CharSequence signerInfo = getContext().getString(R.string.crypto_create_decrypt_data,
+                        data.personalData().givenNames(), data.personalData().surname(),
+                        " Personal code " + data.personalData().personalCode());
+                String enterPin1Desc = containerView.getResources().getString(R.string.crypto_create_decrypt_pin1);
+                AccessibilityUtils.sendAccessibilityEvent(getContext(), TYPE_ANNOUNCEMENT, readyToSignDesc, signerInfo, enterPin1Desc);
+            }
+        }
     }
 
     Observable<String> positiveButtonClicks() {
@@ -116,10 +151,41 @@ final class DecryptDialog extends AlertDialog {
                 .map(ignored -> pin1View.getText().toString());
     }
 
+    private Observable<Object> pin1FieldChange() {
+        return Observable.merge(positiveButtonClicks(), afterTextChangeEvents(pin1View));
+    }
+
+    private Observable<Boolean> positiveButtonEnabled() {
+        return pin1FieldChange().map(ignored -> token != null && pin1View.getText().length() >= 4);
+    }
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        // override default click listener to prevent dialog dismiss
-        clicks(getButton(BUTTON_POSITIVE)).subscribe(positiveButtonClicksSubject);
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        Button confirmButton = getButton(BUTTON_POSITIVE);
+        if (confirmButton != null) {
+            confirmButton.setContentDescription(getContext().getString(R.string.decrypt_button_description));
+        }
+        Button cancelButton = getButton(BUTTON_NEGATIVE);
+        if (cancelButton != null) {
+            cancelButton.setContentDescription(getContext().getString(R.string.cancel_decryption));
+        }
+
+        disposables.attach();
+        disposables.add(positiveButtonEnabled().subscribe(enabled -> {
+            Button decryptButton = getButton(BUTTON_POSITIVE);
+            if (decryptButton != null) {
+                decryptButton.setEnabled(enabled);
+                if (enabled) {
+                    clicks(decryptButton).subscribe(positiveButtonClicksSubject);
+                }
+            }
+        }));
+    }
+
+    @Override
+    public void onDetachedFromWindow() {
+        disposables.detach();
+        super.onDetachedFromWindow();
     }
 }

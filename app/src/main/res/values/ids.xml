@@ -5,8 +5,12 @@
     <item type="id" name="appBar" />
     <item type="id" name="toolbar" />
     <item type="id" name="activityIndicator" />
+    <item type="id" name="activityIndicator_mobile_id" />
     <item type="id" name="activityOverlay" />
     <item type="id" name="listEmpty" />
+
+    <item type="id" name="nameUpdateNameLabel" />
+    <item type="id" name="nameUpdateName" />
 
     <!-- Main Home -->
     <item type="id" name="mainHomeScreen" />
@@ -39,6 +43,7 @@
     <!-- Main Settings -->
     <item type="id" name="mainSettingsScreen" />
     <item type="id" name="mainSettingsFragment" />
+    <item type="id" name="mainSettingsOpenAllFileTypes" />
 
     <!-- Main About -->
     <item type="id" name="mainAboutList" />
@@ -52,6 +57,26 @@
     <item type="id" name="mainDiagnosticsApplicationVersion" />
     <item type="id" name="mainDiagnosticsAndroidVersion" />
     <item type="id" name="mainDiagnosticsLibdigidocppVersion" />
+    <item type="id" name="mainDiagnosticsConfigUrl" />
+    <item type="id" name="mainDiagnosticsTslUrl" />
+    <item type="id" name="mainDiagnosticsSivaUrl" />
+    <item type="id" name="mainDiagnosticsTsaUrl" />
+    <item type="id" name="mainDiagnosticsMidSignUrl" />
+    <item type="id" name="mainDiagnosticsLdapPersonUrl" />
+    <item type="id" name="mainDiagnosticsLdapCorpUrl" />
+    <item type="id" name="mainDiagnosticsMobileIDUrl" />
+    <item type="id" name="mainDiagnosticsMobileIDSKUrl" />
+    <item type="id" name="mainDiagnosticsSmartIDUrl" />
+    <item type="id" name="mainDiagnosticsSmartIDSKUrl" />
+    <item type="id" name="mainDiagnosticsRpUuid" />
+    <item type="id" name="mainDiagnosticsTslCacheLayout" />
+    <item type="id" name="mainDiagnosticsCentralConfigurationDate" />
+    <item type="id" name="mainDiagnosticsCentralConfigurationSerial" />
+    <item type="id" name="mainDiagnosticsCentralConfigurationUrl" />
+    <item type="id" name="mainDiagnosticsCentralConfigurationVersion" />
+    <item type="id" name="mainDiagnosticsCentralConfigurationLastCheck" />
+    <item type="id" name="mainDiagnosticsCentralConfigurationUpdateDate" />
+    <item type="id" name="configurationUpdateButton" />
 
     <!-- Signature Home -->
     <item type="id" name="signatureHomeCreateButton" />
@@ -79,6 +104,7 @@
     <item type="id" name="signatureUpdateListDocumentIcon" />
     <item type="id" name="signatureUpdateListDocumentName" />
     <item type="id" name="signatureUpdateListDocumentSize" />
+    <item type="id" name="signatureUpdateListDocumentSaveButton" />
     <item type="id" name="signatureUpdateListDocumentRemoveButton" />
     <item type="id" name="signatureUpdateListSignatureType" />
     <item type="id" name="signatureUpdateListSignatureName" />
@@ -88,25 +114,34 @@
     <item type="id" name="signatureUpdateListSignatureRemoveButton" />
     <item type="id" name="signatureUpdateListDocumentsAddButton" />
     <item type="id" name="signatureUpdateMobileIdContainer" />
-    <item type="id" name="signatureUpdateMobileIdStatus" />
     <item type="id" name="signatureUpdateMobileIdChallenge" />
+    <item type="id" name="signatureUpdateMobileIdChallengeText" />
     <item type="id" name="signatureUpdateSendButton" />
     <item type="id" name="signatureUpdateButtonSpace" />
     <item type="id" name="signatureUpdateSignatureAddButton" />
     <item type="id" name="signatureUpdateSignatureAdd" />
     <item type="id" name="signatureUpdateSignatureAddMethod" />
     <item type="id" name="signatureUpdateSignatureAddMethodMobileId" />
+    <item type="id" name="signatureUpdateSignatureAddMethodSmartId" />
     <item type="id" name="signatureUpdateSignatureAddMethodIdCard" />
 
-    <item type="id" name="signatureUpdateNameUpdateNameLabel" />
-    <item type="id" name="signatureUpdateNameUpdateName" />
-
     <item type="id" name="signatureUpdateMobileId" />
+    <item type="id" name="signatureUpdateMobileIdPhoneNoText" />
     <item type="id" name="signatureUpdateMobileIdPhoneNoLabel" />
     <item type="id" name="signatureUpdateMobileIdPhoneNo" />
+    <item type="id" name="signatureUpdateMobileIdPersonalCodeText" />
     <item type="id" name="signatureUpdateMobileIdPersonalCodeLabel" />
     <item type="id" name="signatureUpdateMobileIdPersonalCode" />
     <item type="id" name="signatureUpdateMobileIdRememberMe" />
+
+    <item type="id" name="signatureUpdateSmartId" />
+    <item type="id" name="signatureUpdateSmartIdCountryText" />
+    <item type="id" name="signatureUpdateSmartIdCountryLabel" />
+    <item type="id" name="signatureUpdateSmartIdCountry" />
+    <item type="id" name="signatureUpdateSmartIdPersonalCodeText" />
+    <item type="id" name="signatureUpdateSmartIdPersonalCodeLabel" />
+    <item type="id" name="signatureUpdateSmartIdPersonalCode" />
+    <item type="id" name="signatureUpdateSmartIdRememberMe" />
 
     <item type="id" name="signatureUpdateIdCard" />
     <item type="id" name="signatureUpdateIdCardProgressContainer" />
@@ -137,12 +172,18 @@
     <item type="id" name="cryptoCreateButtonSpace" />
     <item type="id" name="cryptoCreateSuccessMessage" />
     <item type="id" name="cryptoCreateName" />
+    <item type="id" name="cryptoCreateNameUpdateButton" />
     <item type="id" name="cryptoCreateAddButton" />
     <item type="id" name="cryptoCreateDataFileName" />
     <item type="id" name="cryptoCreateDataFileRemoveButton" />
+    <item type="id" name="cryptoCreateDataFileSaveButton" />
+
+    <item type="id" name="cryptoCreateNameUpdateNameLabel" />
+    <item type="id" name="cryptoCreateNameUpdateName" />
 
     <item type="id" name="cryptoSubheadTitle" />
     <item type="id" name="cryptoEmptyText" />
+    <item type="id" name="cryptoRecipient" />
     <item type="id" name="cryptoRecipientType" />
     <item type="id" name="cryptoRecipientName" />
     <item type="id" name="cryptoRecipientInfo" />
@@ -203,5 +244,26 @@
     <item type="id" name="eidHomeCodeUpdateRepeat" />
     <item type="id" name="eidHomeCodeUpdateNegativeButton" />
     <item type="id" name="eidHomeCodeUpdatePositiveButton" />
+
+    <!-- Sharing Screen -->
+    <item type="id" name="sharingScreenList" />
+
+    <!-- Success notification Dialog -->
+    <item type="id" name="successNotificationDialog" />
+    <item type="id" name="successNotificationDialogText" />
+    <item type="id" name="successNotificationDontShowAgain" />
+    <item type="id" name="okButton" />
+
+    <!-- Crash Report Dialog -->
+    <item type="id" name="crashReportDialog" />
+    <item type="id" name="crashReportDialogHeader" />
+    <item type="id" name="crashReportDialogText" />
+    <item type="id" name="sendButton" />
+    <item type="id" name="alwaysSendButton" />
+    <item type="id" name="dontSendButton" />
+
+    <!-- Confirmation Dialog -->
+    <item type="id" name="documentRemovalDialog" />
+    <item type="id" name="signatureRemovalDialog" />
 
 </resources>

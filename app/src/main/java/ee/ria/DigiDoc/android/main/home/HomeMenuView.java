@@ -1,13 +1,15 @@
 package ee.ria.DigiDoc.android.main.home;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.widget.NestedScrollView;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.accessibility.AccessibilityEvent;
 import android.widget.RadioGroup;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.widget.NestedScrollView;
 
 import ee.ria.DigiDoc.R;
 import io.reactivex.Observable;
@@ -39,7 +41,11 @@ public final class HomeMenuView extends NestedScrollView {
         super(context, attrs, defStyleAttr);
         inflate(context, R.layout.main_home_menu, this);
         closeButton = findViewById(R.id.mainHomeMenuCloseButton);
+        closeButton.setContentDescription(getResources().getString(R.string.close_menu));
         helpView = findViewById(R.id.mainHomeMenuHelp);
+        helpView.setContentDescription(
+                getResources().getString(R.string.main_home_menu_help) +
+                " link to www.id.ee");
         recentView = findViewById(R.id.mainHomeMenuRecent);
         settingsView = findViewById(R.id.mainHomeMenuSettings);
         aboutView = findViewById(R.id.mainHomeMenuAbout);
@@ -51,6 +57,11 @@ public final class HomeMenuView extends NestedScrollView {
         tintCompoundDrawables(settingsView);
         tintCompoundDrawables(aboutView);
         tintCompoundDrawables(diagnosticsView);
+
+        helpView.postDelayed(() -> {
+            helpView.requestFocus();
+            helpView.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED);
+        }, 2000);
     }
 
     public Observable<Object> closeButtonClicks() {

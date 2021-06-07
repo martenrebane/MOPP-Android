@@ -1,8 +1,7 @@
 package ee.ria.DigiDoc.android.signature.update;
 
-import android.app.Application;
-
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 
 import javax.inject.Inject;
 
@@ -17,23 +16,33 @@ import ee.ria.DigiDoc.android.signature.update.idcard.IdCardResponse;
 import ee.ria.DigiDoc.android.signature.update.mobileid.MobileIdOnSubscribe;
 import ee.ria.DigiDoc.android.signature.update.mobileid.MobileIdRequest;
 import ee.ria.DigiDoc.android.signature.update.mobileid.MobileIdResponse;
+import ee.ria.DigiDoc.android.signature.update.smartid.SmartIdOnSubscribe;
+import ee.ria.DigiDoc.android.signature.update.smartid.SmartIdRequest;
+import ee.ria.DigiDoc.android.signature.update.smartid.SmartIdResponse;
+import ee.ria.DigiDoc.android.utils.navigator.Navigator;
 import ee.ria.DigiDoc.idcard.CodeVerificationException;
-import ee.ria.DigiDoc.mobileid.dto.response.GetMobileCreateSignatureStatusResponse;
+import ee.ria.DigiDoc.mobileid.dto.response.MobileCreateSignatureSessionStatusResponse;
+import ee.ria.DigiDoc.smartid.dto.response.SessionStatusResponse;
+import ee.ria.DigiDoc.sign.SignedContainer;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
+import okio.ByteString;
 
 final class SignatureAddSource {
 
-    private final Application application;
+    private final Navigator navigator;
     private final SignatureContainerDataSource signatureContainerDataSource;
     private final SettingsDataStore settingsDataStore;
     private final IdCardService idCardService;
 
-    @Inject SignatureAddSource(Application application,
+    private static final String EMPTY_VALUE = "";
+
+    @Inject SignatureAddSource(Navigator navigator,
                                SignatureContainerDataSource signatureContainerDataSource,
                                SettingsDataStore settingsDataStore, IdCardService idCardService) {
-        this.application = application;
+        this.navigator = navigator;
         this.signatureContainerDataSource = signatureContainerDataSource;
         this.settingsDataStore = settingsDataStore;
         this.idCardService = idCardService;
@@ -41,6 +50,8 @@ final class SignatureAddSource {
 
     Observable<Result.SignatureAddResult> show(int method) {
         if (method == R.id.signatureUpdateSignatureAddMethodMobileId) {
+            return Observable.just(Result.SignatureAddResult.show(method));
+        } else if (method == R.id.signatureUpdateSignatureAddMethodSmartId) {
             return Observable.just(Result.SignatureAddResult.show(method));
         } else if (method == R.id.signatureUpdateSignatureAddMethodIdCard) {
             return idCardService.data()
@@ -65,12 +76,16 @@ final class SignatureAddSource {
             if (mobileIdRequest.rememberMe()) {
                 settingsDataStore.setPhoneNo(mobileIdRequest.phoneNo());
                 settingsDataStore.setPersonalCode(mobileIdRequest.personalCode());
+            } else {
+                settingsDataStore.setPhoneNo(EMPTY_VALUE);
+                settingsDataStore.setPersonalCode(EMPTY_VALUE);
             }
             return signatureContainerDataSource
                     .get(containerFile)
                     .flatMapObservable(container ->
-                            Observable.create(new MobileIdOnSubscribe(application, container,
-                                    mobileIdRequest.personalCode(), mobileIdRequest.phoneNo())))
+                            Observable.create(new MobileIdOnSubscribe(navigator, container,
+                                    settingsDataStore.getUuid(), mobileIdRequest.personalCode(),
+                                    mobileIdRequest.phoneNo())))
                     .switchMap(response -> {
                         String signature = response.signature();
                         if (signature != null) {
@@ -86,18 +101,39 @@ final class SignatureAddSource {
                         }
                     })
                     .startWith(MobileIdResponse
-                            .status(GetMobileCreateSignatureStatusResponse.ProcessStatus.DEFAULT));
+                            .status(MobileCreateSignatureSessionStatusResponse.ProcessStatus.OK));
+        } else if (request instanceof SmartIdRequest) {
+            SmartIdRequest smartIdRequest = (SmartIdRequest) request;
+            if (smartIdRequest.rememberMe()) {
+                settingsDataStore.setCountry(smartIdRequest.country());
+                settingsDataStore.setSidPersonalCode(smartIdRequest.personalCode());
+            } else {
+                settingsDataStore.setCountry(EMPTY_VALUE);
+                settingsDataStore.setSidPersonalCode(EMPTY_VALUE);
+            }
+            return signatureContainerDataSource
+                    .get(containerFile)
+                    .flatMapObservable(container ->
+                            Observable.create(new SmartIdOnSubscribe(navigator, container,
+                                    settingsDataStore.getUuid(), smartIdRequest.personalCode(),
+                                    smartIdRequest.country())))
+                    .switchMap(response ->
+                            Observable.just(response)
+                    )
+                    .startWith(SmartIdResponse
+                            .status(SessionStatusResponse.ProcessStatus.OK));
         } else if (request instanceof IdCardRequest) {
             IdCardRequest idCardRequest = (IdCardRequest) request;
             return signatureContainerDataSource
                     .get(containerFile)
-                    .flatMapObservable(container ->
+                    .flatMap(container ->
                             idCardService.data()
                                     .filter(dataResponse -> dataResponse.token() != null)
                                     .switchMapSingle(dataResponse ->
                                             idCardService.sign(dataResponse.token(), container,
-                                                    idCardRequest.pin2())))
+                                                    idCardRequest.pin2())).firstOrError())
                     .map(IdCardResponse::success)
+                    .toObservable()
                     .onErrorResumeNext(error -> {
                         if (error instanceof CodeVerificationException) {
                             return idCardService.data()
@@ -114,6 +150,7 @@ final class SignatureAddSource {
                                         return Observable.error(error);
                                     });
                         }
+
                         return Observable.error(error);
                     })
                     .subscribeOn(Schedulers.io())
@@ -122,5 +159,13 @@ final class SignatureAddSource {
         } else {
             throw new IllegalArgumentException("Unknown request " + request);
         }
+    }
+
+    public Single<SignedContainer> sign(String signatureValue, byte[] dataToSign, SignedContainer container) {
+        return Single
+                .fromCallable(() -> container.sign(ByteString.of(dataToSign),
+                        signData -> ByteString.encodeUtf8(signatureValue)))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
     }
 }

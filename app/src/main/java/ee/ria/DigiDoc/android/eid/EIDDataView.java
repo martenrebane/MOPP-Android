@@ -3,18 +3,24 @@ package ee.ria.DigiDoc.android.eid;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.accessibility.AccessibilityEvent;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.view.AccessibilityDelegateCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 
 import net.cachapa.expandablelayout.ExpandableLayout;
 
 import ee.ria.DigiDoc.R;
 import ee.ria.DigiDoc.android.Application;
+import ee.ria.DigiDoc.android.accessibility.AccessibilityUtils;
 import ee.ria.DigiDoc.android.model.idcard.IdCardData;
 import ee.ria.DigiDoc.android.utils.Formatter;
 import ee.ria.DigiDoc.idcard.CertificateType;
@@ -66,6 +72,7 @@ public final class EIDDataView extends LinearLayout {
         formatter = Application.component(context).formatter();
         setOrientation(VERTICAL);
         inflate(context, R.layout.eid_home_data, this);
+        AccessibilityUtils.setAccessibilityPaneTitle(this, "ID-card information");
         typeView = findViewById(R.id.eidHomeDataType);
         givenNamesView = findViewById(R.id.eidHomeDataGivenNames);
         surnameView = findViewById(R.id.eidHomeDataSurname);
@@ -108,6 +115,8 @@ public final class EIDDataView extends LinearLayout {
                 : R.drawable.ic_icon_accordion_collapsed;
         certificatesTitleView.setCompoundDrawablesRelativeWithIntrinsicBounds(drawable, 0, 0, 0);
         tintCompoundDrawables(certificatesTitleView);
+        setCustomClickAccessibilityFeedBack(certificatesTitleView);
+
         certificatesContainerView.setExpanded(certificateContainerExpanded);
 
         authCertificateDataView.data(CertificateType.AUTHENTICATION, data.authCertificate(),
@@ -122,6 +131,7 @@ public final class EIDDataView extends LinearLayout {
             pukButtonView.setVisibility(GONE);
             pukErrorView.setVisibility(VISIBLE);
             pukLinkView.setVisibility(VISIBLE);
+            pukErrorView.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED);
         } else {
             pukButtonView.setVisibility(VISIBLE);
             pukErrorView.setVisibility(GONE);
@@ -153,5 +163,23 @@ public final class EIDDataView extends LinearLayout {
                         .map(ignored ->
                                 CodeUpdateAction.create(CodeType.PUK, CodeUpdateType.UNBLOCK))
         );
+    }
+
+    private void setCustomClickAccessibilityFeedBack(TextView certificatesTitleView) {
+        ViewCompat.setAccessibilityDelegate(certificatesTitleView, new AccessibilityDelegateCompat() {
+            @Override
+            public void onInitializeAccessibilityNodeInfo(View host, AccessibilityNodeInfoCompat info) {
+                super.onInitializeAccessibilityNodeInfo(host, info);
+                String message;
+                if (certificatesContainerView.isExpanded()) {
+                    message = "deactivate";
+                } else {
+                    message = "activate";
+                }
+                AccessibilityNodeInfoCompat.AccessibilityActionCompat customClick = new AccessibilityNodeInfoCompat.AccessibilityActionCompat(
+                        AccessibilityNodeInfoCompat.ACTION_CLICK, message);
+                info.addAction(customClick);
+            }
+        });
     }
 }

@@ -2,14 +2,18 @@ package ee.ria.DigiDoc.android.crypto.create;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bluelinelabs.conductor.Controller;
 import com.google.common.collect.ImmutableList;
@@ -17,7 +21,9 @@ import com.jakewharton.rxbinding2.support.v7.widget.SearchViewQueryTextEvent;
 
 import ee.ria.DigiDoc.R;
 import ee.ria.DigiDoc.android.Application;
+import ee.ria.DigiDoc.android.accessibility.AccessibilityUtils;
 import ee.ria.DigiDoc.android.utils.ViewDisposables;
+import ee.ria.DigiDoc.android.utils.display.DisplayUtil;
 import ee.ria.DigiDoc.android.utils.mvi.MviView;
 import ee.ria.DigiDoc.android.utils.mvi.State;
 import ee.ria.DigiDoc.android.utils.navigator.Navigator;
@@ -27,6 +33,7 @@ import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 
+import static android.view.accessibility.AccessibilityEvent.TYPE_ANNOUNCEMENT;
 import static com.jakewharton.rxbinding2.support.v7.widget.RxSearchView.queryTextChangeEvents;
 import static com.jakewharton.rxbinding2.support.v7.widget.RxToolbar.navigationClicks;
 import static com.jakewharton.rxbinding2.view.RxView.clicks;
@@ -53,6 +60,7 @@ public final class CryptoRecipientsScreen extends Controller implements Screen,
 
     private Toolbar toolbarView;
     private SearchView searchView;
+    private EditText searchViewInnerText;
     private CryptoCreateAdapter adapter;
     private View doneButton;
     private View activityOverlayView;
@@ -109,15 +117,17 @@ public final class CryptoRecipientsScreen extends Controller implements Screen,
     @Override
     public void render(ViewState state) {
         recipients = state.recipients();
-
         setActivity(state.recipientsSearchState().equals(State.ACTIVE));
-        adapter.dataForRecipients(state.recipientsSearchState(), state.recipientsSearchResult(),
+        adapter.dataForRecipients(state.recipientsSearchState(), state.recipientsSearchResult(), state.recipientsSearchError(),
                 recipients);
     }
 
     @Override
     public boolean onBackButtonClick() {
         backButtonClicksSubject.onNext(VOID);
+        if (getApplicationContext() != null) {
+            AccessibilityUtils.sendAccessibilityEvent(getApplicationContext(), TYPE_ANNOUNCEMENT, R.string.recipient_addition_cancelled);
+        }
         return false;
     }
 
@@ -139,12 +149,28 @@ public final class CryptoRecipientsScreen extends Controller implements Screen,
     @Override
     protected View onCreateView(@NonNull LayoutInflater inflater, @NonNull ViewGroup container) {
         View view = inflater.inflate(R.layout.crypto_recipients_screen, container, false);
+        AccessibilityUtils.setAccessibilityPaneTitle(view, R.string.crypto_recipients_title);
+
         toolbarView = view.findViewById(R.id.toolbar);
         searchView = view.findViewById(R.id.cryptoRecipientsSearch);
+        searchViewInnerText = searchView.findViewById(R.id.search_src_text);
+        searchViewInnerText.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+               searchViewInnerText.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+               if (getResources() != null) {
+                   searchViewInnerText.setLayoutParams(
+                           new LinearLayout.LayoutParams(searchView.getWidth(), DisplayUtil.getDisplayMetricsDpToInt(getResources(), 48))
+                   );
+               }
+            }
+        });
+
         searchView.setSubmitButtonEnabled(true);
         RecyclerView listView = view.findViewById(R.id.cryptoRecipientsList);
         listView.setLayoutManager(new LinearLayoutManager(container.getContext()));
         listView.setAdapter(adapter = new CryptoCreateAdapter());
+        listView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         doneButton = view.findViewById(R.id.cryptoRecipientsDoneButton);
         activityOverlayView = view.findViewById(R.id.activityOverlay);
         activityIndicatorView = view.findViewById(R.id.activityIndicator);

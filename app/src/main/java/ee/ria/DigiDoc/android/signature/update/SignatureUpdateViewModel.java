@@ -15,12 +15,24 @@ public final class SignatureUpdateViewModel extends
         this.settingsDataStore = settingsDataStore;
     }
 
+    public int signatureAddMethod() { return settingsDataStore.getSignatureAddMethod(); }
+
+    public void setSignatureAddMethod(int method) { settingsDataStore.setSignatureAddMethod(method); }
+
     public String phoneNo() {
         return settingsDataStore.getPhoneNo();
     }
 
+    public String country() {
+        return settingsDataStore.getCountry();
+    }
+
     public String personalCode() {
         return settingsDataStore.getPersonalCode();
+    }
+
+    public String sidPersonalCode() {
+        return settingsDataStore.getSidPersonalCode();
     }
 
     @Override
@@ -41,7 +53,7 @@ public final class SignatureUpdateViewModel extends
         } else if (intent instanceof Intent.DocumentRemoveIntent) {
             Intent.DocumentRemoveIntent documentRemoveIntent = (Intent.DocumentRemoveIntent) intent;
             return Action.DocumentRemoveAction.create(documentRemoveIntent.showConfirmation(),
-                    documentRemoveIntent.containerFile(), documentRemoveIntent.document());
+                    documentRemoveIntent.containerFile(), documentRemoveIntent.documents(), documentRemoveIntent.document());
         } else if (intent instanceof Intent.SignatureRemoveIntent) {
             Intent.SignatureRemoveIntent signatureRemoveIntent =
                     (Intent.SignatureRemoveIntent) intent;

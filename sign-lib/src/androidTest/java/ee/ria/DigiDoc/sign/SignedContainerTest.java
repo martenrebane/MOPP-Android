@@ -1,7 +1,8 @@
 package ee.ria.DigiDoc.sign;
 
+import android.content.Context;
 import android.content.res.AssetManager;
-import android.support.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
@@ -17,6 +18,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import ee.ria.DigiDoc.configuration.ConfigurationManager;
+import ee.ria.DigiDoc.configuration.ConfigurationProperties;
+import ee.ria.DigiDoc.configuration.loader.CachedConfigurationHandler;
+
 import static com.google.common.io.Files.getFileExtension;
 import static com.google.common.io.Files.getNameWithoutExtension;
 import static ee.ria.DigiDoc.sign.SignedContainerSubject.assertThat;
@@ -24,7 +29,11 @@ import static ee.ria.DigiDoc.sign.SignedContainerSubject.assertThat;
 public final class SignedContainerTest {
 
     static {
-        SignLib.init(InstrumentationRegistry.getTargetContext());
+        Context targetContext = InstrumentationRegistry.getTargetContext();
+        ConfigurationProperties configurationProperties = new ConfigurationProperties(targetContext.getAssets());
+        CachedConfigurationHandler cachedConfigurationHandler = new CachedConfigurationHandler(targetContext.getCacheDir());
+        ConfigurationManager configurationManager = new ConfigurationManager(targetContext, configurationProperties, cachedConfigurationHandler, "SignedContainerTest-User-Agent");
+        SignLib.init(targetContext, "tsa_url", configurationManager.getConfiguration(), "SignedContainerTest-User-Agent");
     }
 
     private static final String DIR = "signed-containers";

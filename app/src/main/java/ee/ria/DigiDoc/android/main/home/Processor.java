@@ -3,10 +3,12 @@ package ee.ria.DigiDoc.android.main.home;
 import android.app.Application;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.support.annotation.IdRes;
-import android.support.annotation.Nullable;
+import androidx.annotation.IdRes;
+import androidx.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.SparseIntArray;
+import android.view.View;
+import android.view.accessibility.AccessibilityEvent;
 
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
@@ -16,6 +18,7 @@ import java.util.Locale;
 import javax.inject.Inject;
 
 import ee.ria.DigiDoc.R;
+import ee.ria.DigiDoc.android.accessibility.AccessibilityUtils;
 import ee.ria.DigiDoc.android.crypto.create.CryptoCreateScreen;
 import ee.ria.DigiDoc.android.main.about.AboutScreen;
 import ee.ria.DigiDoc.android.main.diagnostics.DiagnosticsScreen;
@@ -102,6 +105,11 @@ final class Processor implements ObservableTransformer<Intent, Result> {
         navigation = upstream -> upstream.switchMap(action -> {
             if (action.item() != R.id.mainHomeNavigationEID) {
                 clearEidViewModel();
+            } else {
+                View myEidView = navigator.activity().findViewById(R.id.mainHomeNavigationEID);
+                if (myEidView != null) {
+                    myEidView.setContentDescription(application.getResources().getString(R.string.my_eid_content_description));
+                }
             }
             return Observable.just(Result.NavigationResult
                     .create(NAVIGATION_ITEM_VIEWS.get(action.item())));
@@ -129,7 +137,8 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                         localeService.applicationLocale(new Locale(LOCALES.get(intent.item())));
                         return Result.LocaleChangeResult.create(LOCALES.inverse().get(
                                 localeService.applicationLocale().getLanguage()));
-                    });
+                    })
+                    .doFinally(() -> AccessibilityUtils.sendAccessibilityEvent(application.getApplicationContext(), AccessibilityEvent.TYPE_ANNOUNCEMENT, R.string.language_changed));
         });
     }
 

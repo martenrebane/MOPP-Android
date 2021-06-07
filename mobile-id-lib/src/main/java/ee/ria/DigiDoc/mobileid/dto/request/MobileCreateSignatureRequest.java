@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Riigi Infosüsteemide Amet
+ * Copyright 2020 Riigi Infosüsteemide Amet
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,89 +21,79 @@ package ee.ria.DigiDoc.mobileid.dto.request;
 
 import com.google.gson.Gson;
 
-import org.simpleframework.xml.Element;
-import org.simpleframework.xml.ElementList;
-import org.simpleframework.xml.Root;
+public class MobileCreateSignatureRequest {
 
-import java.util.List;
+    private String relyingPartyName;
+    private String relyingPartyUUID;
+    private String url;
+    private String phoneNumber;
+    private String nationalIdentityNumber;
 
-import ee.ria.DigiDoc.mobileid.soap.RequestObject;
+    private String containerPath;
 
-@Root(name = "dig:MobileCreateSignature")
-public class MobileCreateSignatureRequest implements RequestObject {
-
-    @Element(name = "IDCode")
-    private String idCode;
-    @Element(name = "Country", required = false)
-    private String country;
-    @Element(name = "PhoneNo")
-    private String phoneNr;
-    @Element(name = "Language")
+    private String hashType;
     private String language;
-    @Element(name = "ServiceName")
-    private String serviceName;
-    @Element(name = "MessageToDisplay", required = false)
-    private String messageToDisplay;
-    @Element(name = "Role", required = false)
-    private String role;
-    @Element(name = "City", required = false)
-    private String city;
-    @Element(name = "StateOrProvince", required = false)
-    private String stateOrProvince;
-    @Element(name = "PostalCode", required = false)
-    private String postalCode;
-    @Element(name = "CountryName", required = false)
-    private String countryName;
-    @Element(name = "SigningProfile", required = false)
-    private String signingProfile;
-    @Element(name = "Format")
-    private String format;
-    @Element(name = "Version")
-    private String version;
-    @Element(name = "SignatureID")
-    private String signatureId;
-    @Element(name = "MessagingMode")
-    private String messagingMode;
-    @Element(name = "AsyncConfiguration", required = false)
-    private Integer asyncConfiguration;
-    @ElementList(name = "DataFiles")
-    private List<DataFileDto> datafiles;
+    private String displayText;
+    private String displayTextFormat;
 
-    public static String toJson(MobileCreateSignatureRequest mobileCreateSignatureRequest) {
-        return new Gson().toJson(mobileCreateSignatureRequest);
+    public static String toJson(MobileCreateSignatureRequest request) {
+        return new Gson().toJson(request);
     }
 
-    public static MobileCreateSignatureRequest fromJson(String json) {
-        return new Gson().fromJson(json, MobileCreateSignatureRequest.class);
+    public String getRelyingPartyName() {
+        return relyingPartyName;
     }
 
-    @Override
-    public String getOperationName() {
-        return "dig:MobileCreateSignature";
+    public void setRelyingPartyName(String relyingPartyName) {
+        this.relyingPartyName = relyingPartyName;
     }
 
-    public String getIdCode() {
-        return idCode;
+    public String getRelyingPartyUUID() {
+        return relyingPartyUUID;
     }
 
-    public void setIdCode(String idCode) {
-        this.idCode = idCode;
+    public void setRelyingPartyUUID(String relyingPartyUUID) {
+        this.relyingPartyUUID = relyingPartyUUID;
     }
 
-    public String getCountry() {
-        return country;
+    public String getUrl() {
+        return url;
     }
 
-    public void setCountry(String country) {
-        this.country = country;
+    public void setUrl(String url) {
+        this.url = url;
     }
 
-    public String getPhoneNr() {
-        return phoneNr;
+    public String getPhoneNumber() {
+        return phoneNumber;
     }
 
-    public void setPhoneNr(String phoneNr) {
-        this.phoneNr = phoneNr;
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getNationalIdentityNumber() {
+        return nationalIdentityNumber;
+    }
+
+    public void setNationalIdentityNumber(String nationalIdentityNumber) {
+        this.nationalIdentityNumber = nationalIdentityNumber;
+    }
+
+    public String getContainerPath() {
+        return containerPath;
+    }
+
+    public void setContainerPath(String containerPath) {
+        this.containerPath = containerPath;
+    }
+
+    public String getHashType() {
+        return hashType;
+    }
+
+    public void setHashType(String hashType) {
+        this.hashType = hashType;
     }
 
     public String getLanguage() {
@@ -114,140 +104,34 @@ public class MobileCreateSignatureRequest implements RequestObject {
         this.language = language;
     }
 
-    public String getServiceName() {
-        return serviceName;
+    public String getDisplayText() {
+        return displayText;
     }
 
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName;
+    public void setDisplayText(String displayText) {
+        this.displayText = displayText;
     }
 
-    public String getMessageToDisplay() {
-        return messageToDisplay;
+    public String getDisplayTextFormat() {
+        return displayTextFormat;
     }
 
-    public void setMessageToDisplay(String messageToDisplay) {
-        this.messageToDisplay = messageToDisplay;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getStateOrProvince() {
-        return stateOrProvince;
-    }
-
-    public void setStateOrProvince(String stateOrProvince) {
-        this.stateOrProvince = stateOrProvince;
-    }
-
-    public String getPostalCode() {
-        return postalCode;
-    }
-
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
-    }
-
-    public String getCountryName() {
-        return countryName;
-    }
-
-    public void setCountryName(String countryName) {
-        this.countryName = countryName;
-    }
-
-    public String getSigningProfile() {
-        return signingProfile;
-    }
-
-    public void setSigningProfile(String signingProfile) {
-        this.signingProfile = signingProfile;
-    }
-
-    public String getFormat() {
-        return format;
-    }
-
-    public void setFormat(String format) {
-        this.format = format;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public String getSignatureId() {
-        return signatureId;
-    }
-
-    public void setSignatureId(String signatureId) {
-        this.signatureId = signatureId;
-    }
-
-    public String getMessagingMode() {
-        return messagingMode;
-    }
-
-    public void setMessagingMode(String messagingMode) {
-        this.messagingMode = messagingMode;
-    }
-
-    public Integer getAsyncConfiguration() {
-        return asyncConfiguration;
-    }
-
-    public void setAsyncConfiguration(Integer asyncConfiguration) {
-        this.asyncConfiguration = asyncConfiguration;
-    }
-
-    public List<DataFileDto> getDatafiles() {
-        return datafiles;
-    }
-
-    public void setDatafiles(List<DataFileDto> datafiles) {
-        this.datafiles = datafiles;
+    public void setDisplayTextFormat(String displayTextFormat) {
+        this.displayTextFormat = displayTextFormat;
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("MobileCreateSignatureRequest{");
-        sb.append("idCode='").append(idCode).append('\'');
-        sb.append(", country='").append(country).append('\'');
-        sb.append(", phoneNr='").append(phoneNr).append('\'');
-        sb.append(", language='").append(language).append('\'');
-        sb.append(", serviceName='").append(serviceName).append('\'');
-        sb.append(", messageToDisplay='").append(messageToDisplay).append('\'');
-        sb.append(", role='").append(role).append('\'');
-        sb.append(", city='").append(city).append('\'');
-        sb.append(", stateOrProvince='").append(stateOrProvince).append('\'');
-        sb.append(", postalCode='").append(postalCode).append('\'');
-        sb.append(", countryName='").append(countryName).append('\'');
-        sb.append(", signingProfile='").append(signingProfile).append('\'');
-        sb.append(", format='").append(format).append('\'');
-        sb.append(", version='").append(version).append('\'');
-        sb.append(", signatureId='").append(signatureId).append('\'');
-        sb.append(", messagingMode='").append(messagingMode).append('\'');
-        sb.append(", asyncConfiguration=").append(asyncConfiguration);
-        sb.append(", datafiles=").append(datafiles);
-        sb.append('}');
-        return sb.toString();
+        return "MobileCreateSignatureRequest{" +
+                "relyingPartyName='" + relyingPartyName + '\'' +
+                ", relyingPartyUUID='" + relyingPartyUUID + '\'' +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                ", nationalIdentityNumber='" + nationalIdentityNumber + '\'' +
+                ", containerPath='" + containerPath + '\'' +
+                ", hashType='" + hashType + '\'' +
+                ", language='" + language + '\'' +
+                ", displayText='" + displayText + '\'' +
+                ", displayTextFormat='" + displayTextFormat + '\'' +
+                '}';
     }
 }
