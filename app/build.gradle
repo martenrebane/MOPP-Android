@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 apply plugin: 'com.google.firebase.crashlytics'
+apply plugin: 'com.microsoft.intune.mam'
 
 android {
     compileSdkVersion project.compileSdkVersion
@@ -145,7 +146,6 @@ dependencies {
     implementation platform("com.google.firebase:firebase-bom:${firebaseCrashlyticsVersion}")
     implementation "com.google.firebase:firebase-crashlytics"
 
-
     implementation project(':common-lib')
     implementation project(':sign-lib')
     implementation project(':crypto-lib')
@@ -154,6 +154,23 @@ dependencies {
     implementation project(':mobile-id-lib')
     implementation project(':smart-id-lib')
 
+    implementation files("MAMSDK/Microsoft.Intune.MAM.SDK.aar")
+
     testAnnotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
     testImplementation "junit:junit:${junitVersion}"
+}
+
+intunemam {
+    includeExternalLibraries = [
+            "androidx.*",
+            "com.google.*",
+            "com.jakewharton.*",
+            "com.ryanharter.*",
+            "com.takisoft.*",
+            "com.github.*",
+            "io.reactivex.*",
+            "net.cachapa.*",
+            "org.slf4j.*"
+    ]
+    verify = true
 }

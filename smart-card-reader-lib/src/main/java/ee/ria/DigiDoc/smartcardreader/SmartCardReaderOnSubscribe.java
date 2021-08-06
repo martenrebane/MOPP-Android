@@ -17,7 +17,7 @@ import timber.log.Timber;
 
 final class SmartCardReaderOnSubscribe implements ObservableOnSubscribe<Optional<SmartCardReader>> {
 
-    private static final String ACTION_USB_DEVICE_PERMISSION = BuildConfig.APPLICATION_ID +
+    private static final String ACTION_USB_DEVICE_PERMISSION = BuildConfig.LIBRARY_PACKAGE_NAME +
             ".USB_DEVICE_PERMISSION";
 
     private final Context context;

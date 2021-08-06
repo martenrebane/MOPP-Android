@@ -3,16 +3,28 @@ allprojects {
         repositories {
             google()
             jcenter()
+            mavenCentral()
+            maven {
+                url 'https://pkgs.dev.azure.com/MicrosoftDeviceSDK/DuoSDK-Public/_packaging/Duo-SDK-Feed/maven/v1'
+            }
         }
         dependencies {
-            classpath 'com.android.tools.build:gradle:3.4.2'
+            classpath 'com.android.tools.build:gradle:4.0.1'
             classpath 'com.google.gms:google-services:4.3.4'
             classpath 'com.google.firebase:firebase-crashlytics-gradle:2.3.0'
+            dependencies {
+                classpath "org.javassist:javassist:3.28.0-GA"
+                classpath files("MAMSDK/GradlePlugin/com.microsoft.intune.mam.build.jar")
+            }
         }
     }
     repositories {
         google()
         jcenter()
+        mavenCentral()
+        maven {
+            url 'https://pkgs.dev.azure.com/MicrosoftDeviceSDK/DuoSDK-Public/_packaging/Duo-SDK-Feed/maven/v1'
+        }
     }
 
     def buildFolder = new File("app/${buildDir}/bundle")

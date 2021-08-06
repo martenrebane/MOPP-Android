@@ -6,4 +6,4 @@ include ':app',
         ':smart-id-lib',
         ':id-card-lib',
         ':smart-card-reader-lib',
-        ':common-lib'
+        ':common-lib', ':MAMSDK'
