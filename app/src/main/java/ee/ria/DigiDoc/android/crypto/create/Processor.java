@@ -6,6 +6,7 @@ import static ee.ria.DigiDoc.android.Constants.RC_CRYPTO_CREATE_DATA_FILE_ADD;
 import static ee.ria.DigiDoc.android.Constants.RC_CRYPTO_CREATE_INITIAL;
 import static ee.ria.DigiDoc.android.Constants.SAVE_FILE;
 import static ee.ria.DigiDoc.android.utils.Immutables.with;
+import static ee.ria.DigiDoc.android.utils.Immutables.without;
 import static ee.ria.DigiDoc.android.utils.IntentUtils.createGetContentIntent;
 import static ee.ria.DigiDoc.android.utils.IntentUtils.createSaveIntent;
 import static ee.ria.DigiDoc.android.utils.IntentUtils.createSendIntent;

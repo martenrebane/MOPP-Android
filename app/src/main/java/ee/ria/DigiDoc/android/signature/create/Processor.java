@@ -13,6 +13,8 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import ee.ria.DigiDoc.R;
+import ee.ria.DigiDoc.android.Activity;
 import ee.ria.DigiDoc.android.signature.data.SignatureContainerDataSource;
 import ee.ria.DigiDoc.android.signature.update.SignatureUpdateScreen;
 import ee.ria.DigiDoc.android.utils.ClickableDialogUtil;

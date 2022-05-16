@@ -254,22 +254,6 @@ public final class IntentUtils {
         return fileSize;
     }
 
-    private static long getFileSize(ContentResolver contentResolver, Uri uri) {
-        Cursor cursor = contentResolver.
-                query(FileUtil.normalizeUri(uri),
-                        null, null, null, null);
-        long fileSize = 0;
-        if (cursor != null) {
-            int columnIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
-            if (cursor.moveToFirst() && !cursor.isNull(columnIndex)) {
-                fileSize = cursor.getLong(columnIndex);
-            }
-            cursor.close();
-            return fileSize;
-        }
-        return fileSize;
-    }
-
     private static File getExternallyOpenedFile(ContentResolver contentResolver, Uri uri, String directory) {
         try (InputStream initialStream = contentResolver.openInputStream(uri)) {
             File externalFile = new File(directory + "/file");
