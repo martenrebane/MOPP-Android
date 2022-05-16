@@ -6,7 +6,6 @@ import static ee.ria.DigiDoc.android.Constants.RC_CRYPTO_CREATE_DATA_FILE_ADD;
 import static ee.ria.DigiDoc.android.Constants.RC_CRYPTO_CREATE_INITIAL;
 import static ee.ria.DigiDoc.android.Constants.SAVE_FILE;
 import static ee.ria.DigiDoc.android.utils.Immutables.with;
-import static ee.ria.DigiDoc.android.utils.Immutables.without;
 import static ee.ria.DigiDoc.android.utils.IntentUtils.createGetContentIntent;
 import static ee.ria.DigiDoc.android.utils.IntentUtils.createSaveIntent;
 import static ee.ria.DigiDoc.android.utils.IntentUtils.createSendIntent;
@@ -125,7 +124,7 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                         .observeOn(AndroidSchedulers.mainThread())
                         .startWith(Result.InitialResult.activity());
             } else if (androidIntent != null) {
-                return parseIntent(androidIntent, application);
+                return parseIntent(androidIntent, application, fileSystem.getExternallyOpenedFilesDir());
             } else {
                 navigator.execute(Transaction.activityForResult(RC_CRYPTO_CREATE_INITIAL,
                         createGetContentIntent(), null));
@@ -135,7 +134,7 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                         .switchMap(activityResult -> {
                             android.content.Intent data = activityResult.data();
                             if (activityResult.resultCode() == RESULT_OK && data != null) {
-                                return parseIntent(data, application)
+                                return parseIntent(data, application, fileSystem.getExternallyOpenedFilesDir())
                                         .onErrorReturn(throwable -> {
                                             ToastUtil.showEmptyFileError(application);
                                             navigator.execute(Transaction.pop());
@@ -194,7 +193,7 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                             return Observable
                                     .fromCallable(() -> {
                                         ImmutableList<FileStream> fileStreams =
-                                                parseGetContentIntent(contentResolver, data);
+                                                parseGetContentIntent(contentResolver, data, fileSystem.getExternallyOpenedFilesDir());
                                         ImmutableList.Builder<File> builder =
                                                 ImmutableList.<File>builder().addAll(dataFiles);
                                         ImmutableList<FileStream> validFiles = FileSystem.getFilesWithValidSize(fileStreams);
@@ -469,13 +468,12 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                 shared.ofType(Intent.SendIntent.class).compose(send)));
     }
 
-    private Observable<Result.InitialResult> parseIntent(android.content.Intent intent, Application application) {
+    private Observable<Result.InitialResult> parseIntent(android.content.Intent intent, Application application, File externallyOpenedFileDir) {
         return Observable
                 .fromCallable(() -> {
-                    ImmutableList<FileStream> fileStreams =
-                            parseGetContentIntent(contentResolver, intent);
-                    ImmutableList<FileStream> validFiles = FileSystem.getFilesWithValidSize(fileStreams);
-                    ToastUtil.handleEmptyFileError(fileStreams, validFiles, application);
+                    ImmutableList<FileStream> validFiles = FileSystem.getFilesWithValidSize(
+                            parseGetContentIntent(contentResolver, intent, externallyOpenedFileDir));
+                    ToastUtil.handleEmptyFileError(validFiles, application);
                     if (validFiles.size() == 1
                             && isContainerFileName(validFiles.get(0).displayName())) {
                         File file = fileSystem.addSignatureContainer(validFiles.get(0));

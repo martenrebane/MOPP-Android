@@ -3,7 +3,9 @@ package ee.ria.DigiDoc.sign;
 import static com.google.common.collect.ImmutableList.sortedCopyOf;
 import static com.google.common.io.Files.getFileExtension;
 
+import android.content.Context;
 import android.util.Base64;
+import android.util.Log;
 import android.webkit.MimeTypeMap;
 
 import androidx.annotation.NonNull;
@@ -12,16 +14,29 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteSource;
+
+import org.apache.commons.io.FilenameUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.NodeList;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import ee.ria.DigiDoc.common.Certificate;
 import ee.ria.DigiDoc.common.FileUtil;
+import ee.ria.DigiDoc.configuration.util.FileUtils;
 import ee.ria.DigiDoc.sign.utils.Function;
 import ee.ria.libdigidocpp.Container;
 import ee.ria.libdigidocpp.DataFiles;
@@ -159,7 +174,7 @@ public abstract class SignedContainer {
 
         try {
             Container container = container(file());
-          
+
             ee.ria.libdigidocpp.Signature signature = container
                     .prepareWebSignature(certificate.toByteArray(), signatureProfile());
             if (signature != null) {
@@ -306,6 +321,10 @@ public abstract class SignedContainer {
         return !NON_LEGACY_EXTENSIONS.contains(extension);
     }
 
+    public static String getMediaType(File file) throws Exception {
+         return container(file).mediaType();
+    }
+
     private static DataFile dataFile(ee.ria.libdigidocpp.DataFile dataFile) {
         return DataFile.create(dataFile.id(), new File(dataFile.fileName()).getName(),
                 dataFile.fileSize(), dataFile.mediaType());
@@ -391,4 +410,82 @@ public abstract class SignedContainer {
         }
         return v1 < v2 ? -1 : 1;
     };
+
+    /**
+     * Check if file is signed PDF file.
+     *
+     * @param byteSource ByteSource of the file.
+     * @return boolean true if file is signed PDF file. False otherwise.
+     */
+    public static boolean isSignedPDFFile(ByteSource byteSource, Context context, String fileName) {
+        try {
+            byte[] bytes = byteSource.read();
+
+            File pdfFilesDirectory = new File(context.getFilesDir(), "tempPdfFiles");
+
+            FileUtils.createDirectoryIfNotExist(pdfFilesDirectory.toString());
+
+            File file = new File(pdfFilesDirectory, String.format(Locale.US, "%s",
+                    FilenameUtils.getName(FileUtil.sanitizeString(fileName, ""))));
+
+            if (!org.apache.commons.io.FileUtils.directoryContains(pdfFilesDirectory, file)) {
+                try (OutputStream outStream = new FileOutputStream(file.getCanonicalPath())) {
+                    outStream.write(bytes);
+                }
+            }
+
+            boolean isSignedContainer = SignedContainer.isContainer(file);
+            FileUtils.removeFile(file.getCanonicalPath());
+            FileUtils.removeFile(pdfFilesDirectory.getCanonicalPath());
+
+            return isSignedContainer;
+        } catch (IOException e) {
+            Timber.e(e, "Unable to check if PDF file is signed");
+            return false;
+        }
+    }
+
+    public static boolean isCdoc(File file) {
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        try {
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(file);
+            NodeList nodes = doc.getElementsByTagName("denc:EncryptionProperty");
+            for (int i = 0; i < nodes.getLength(); i++) {
+                NamedNodeMap attributes = nodes.item(i).getAttributes();
+                for (int j = 0; j < attributes.getLength(); j++) {
+                    if (attributes.item(j).getNodeValue().equals("DocumentFormat")) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Timber.log(Log.ERROR, e, "XML parsing failed");
+            return false;
+        }
+
+        return false;
+    }
+
+    public static boolean isDdoc(File file) {
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        try {
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(file);
+            NodeList nodes = doc.getElementsByTagName("SignedDoc");
+            for (int i = 0; i < nodes.getLength(); i++) {
+                NamedNodeMap attributes = nodes.item(i).getAttributes();
+                for (int j = 0; j < attributes.getLength(); j++) {
+                    if (attributes.item(j).getNodeValue().equals("DIGIDOC-XML")) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Timber.log(Log.ERROR, e, "XML parsing failed");
+            return false;
+        }
+
+        return false;
+    }
 }
