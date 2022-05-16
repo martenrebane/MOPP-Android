@@ -52,6 +52,7 @@
     <string name="main_diagnostics_configuration_update_date">UPDATE DATE:\u0020</string>
     <string name="main_diagnostics_configuration_last_check_date">LAST CHECK:\u0020</string>
     <string name="main_diagnostics_configuration_check_for_update_button">REFRESH CONFIGURATION</string>
+    <string name="main_diagnostics_configuration_save_diagnostics_button">SAVE DIAGNOSTICS</string>
     <string name="main_diagnostics_rpuuid_default">is set by default</string>
     <string name="main_diagnostics_rpuuid_custom">is set manually</string>
 
@@ -67,6 +68,9 @@
 
     <!-- Signature Create -->
     <string name="signature_create_error">Could not load selected files</string>
+    <string name="siva_send_message_dialog">Signed document in PDF and DDOC format will be transmitted to the Digital Signature Validation Service SiVa to verify the validity of the digital signature. Read more information about transmitted data to Digital Signature Validation service from https://www.id.ee/en/article/data-protection-conditions-for-the-id-software-of-the-national-information-system-authority/</string>
+    <string name="siva_read_here">here</string>
+    <string name="siva_continue_question">Do you want to continue?</string>
 
     <!-- Signature Update -->
     <string name="signature_update_title_created">Signing</string>
@@ -125,8 +129,10 @@
     <string name="signature_update_signature_add_positive_button">SIGN</string>
     <string name="signature_update_signature_add_success">SIGNATURE ADDED</string>
     <string name="signature_update_signature_add_error">Something went wrong</string>
+    <string name="signature_update_signature_add_error_title">Failed to sign container</string>
 
     <string name="signature_update_signature_error_message_additional_information">Additional information</string>
+    <string name="signature_update_signature_error_message_details">Details</string>
 
     <string name="signature_update_signature_error_message_too_many_requests">The limit for digital signatures per month has been reached for this IP address. https://www.id.ee/en/article/for-organisations-that-sign-large-quantities-of-documents-using-digidoc4-client/</string>
     <string name="signature_update_signature_error_message_exceeded_unsuccessful_requests">Failed to send request. The number of unsuccessful request from this IP address has been exceeded. Please try again later.</string>
@@ -135,9 +141,9 @@
 
     <string name="signature_update_signature_error_invalid_ssl_handshake">SSL handshake failed. Check your application settings or software upgrades</string>
 
-    <string name="signature_update_signature_selected_method_mobile_id">Selected signing option Mobile-ID, tab %1$d of %2$d</string>
-    <string name="signature_update_signature_selected_method_smart_id">Selected signing option Smart-ID, tab %1$d of %2$d</string>
-    <string name="signature_update_signature_selected_method_id_card">Selected signing option ID-card, tab %1$d of %2$d</string>
+    <string name="signature_update_signature_selected_method_mobile_id">Signing option Mobile-ID, tab %1$d of %2$d</string>
+    <string name="signature_update_signature_selected_method_smart_id">Signing option Smart-ID, tab %1$d of %2$d</string>
+    <string name="signature_update_signature_selected_method_id_card">Signing option ID-card, tab %1$d of %2$d</string>
 
     <string name="signature_update_signature_chosen_method_mobile_id">Signing method Mobile-ID, selected</string>
     <string name="signature_update_signature_chosen_method_smart_id">Signing method Smart-ID, selected</string>
@@ -185,6 +191,7 @@
     <string name="signature_update_mobile_id_error_message_exceeds_volume_limit">Too many datafiles in container</string>
     <string name="signature_update_mobile_id_error_message_access_rights">Failed to sign container. Check your mobile-ID service access settings. https://www.id.ee/en/article/for-organisations-that-sign-large-quantities-of-documents-using-digidoc4-client/</string>
     <string name="signature_update_mobile_id_error_simultaneous_requests_limit_exceeded">Simultaneous requests limit exceeded</string>
+    <string name="signature_update_mobile_id_error_technical_error">Failed to send request. Mobile-ID service has encountered technical errors. Please try again later.</string>
 
     <string name="signature_update_smart_id_message">Enter your personal code to sign with Smart-ID</string>
     <string name="signature_update_smart_id_country">Country</string>
@@ -198,6 +205,7 @@
     <string name="signature_update_smart_id_error_message_account_not_found_or_timeout">Failed to sign container. Your Smart-ID transaction has expired or user account not found</string>
     <string name="signature_update_smart_id_error_message_session_not_found">Session not found</string>
     <string name="signature_update_smart_id_error_message_access_rights">Failed to sign container. Check your Smart-ID service access settings. https://www.id.ee/en/article/for-organisations-that-sign-large-quantities-of-documents-using-digidoc4-client/</string>
+    <string name="signature_update_smart_id_error_technical_error">Failed to send request. Smart-ID service has encountered technical errors. Please try again later.</string>
 
     <string name="signature_update_id_card_progress_message_initial">Connect the card reader and insert your ID-card into the reader</string>
     <string name="signature_update_id_card_progress_message_reader_detected">Reader found. Insert your ID-card into the reader.</string>
@@ -400,6 +408,9 @@
     <string name="decrypt_content_description">Decrypt, tab %1$d of %2$d</string>
     <string name="decrypt_send_content_description">Share, tab %1$d of %2$d</string>
 
+    <string name="yes_button">YES</string>
+    <string name="cancel_button">CANCEL</string>
+
     <!-- Sharing Screen -->
     <string name="sharing_screen_title">Choose file</string>
 
@@ -413,6 +424,7 @@
     <string name="file_removed">File removed</string>
     <string name="file_removal_cancelled">File removal cancelled</string>
     <string name="file_saved">File saved</string>
+    <string name="file_saved_error">Failed to save file</string>
     <string name="document_removed">Document removed</string>
     <string name="document_removal_cancelled">Document removal cancelled</string>
     <string name="file_added">File added</string>

@@ -1,6 +1,6 @@
 /*
  * smart-id-lib
- * Copyright 2017 - 2021 Riigi Infosüsteemi Amet
+ * Copyright 2017 - 2022 Riigi Infosüsteemi Amet
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,6 @@
 package ee.ria.DigiDoc.smartid.rest;
 
 import ee.ria.DigiDoc.smartid.dto.request.PostCertificateRequest;
-import ee.ria.DigiDoc.smartid.dto.request.PostCreateSignatureRequest;
 import ee.ria.DigiDoc.smartid.dto.response.SessionResponse;
 import ee.ria.DigiDoc.smartid.dto.response.SessionStatusResponse;
 import retrofit2.Call;
@@ -34,7 +33,7 @@ import retrofit2.http.Query;
 
 public interface SIDRestServiceClient {
 
-    String CONTENT_TYPE_HEADER = "Content-Type: application/json";
+    String CONTENT_TYPE_HEADER = "Content-Type: application/json; charset=utf-8";
     String CONTENT_TYPE_ACCEPT = "Accept: application/json";
 
     @Headers({ CONTENT_TYPE_HEADER, CONTENT_TYPE_ACCEPT })
@@ -48,7 +47,7 @@ public interface SIDRestServiceClient {
     @POST("signature/document/{documentnumber}")
     Call<SessionResponse> getCreateSignature(
             @Path(value = "documentnumber", encoded = true) String documentnumber,
-            @Body PostCreateSignatureRequest body);
+            @Body String body);
 
     @Headers({ CONTENT_TYPE_HEADER, CONTENT_TYPE_ACCEPT })
     @GET("session/{session_id}")

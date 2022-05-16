@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 - 2021 Riigi Infosüsteemi Amet
+ * Copyright 2017 - 2022 Riigi Infosüsteemi Amet
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,8 +19,6 @@
 
 package ee.ria.DigiDoc.android;
 
-import androidx.lifecycle.ViewModel;
-import androidx.lifecycle.ViewModelProvider;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -29,7 +27,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
 import android.os.StrictMode;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.common.collect.ImmutableList;
 
@@ -61,6 +63,9 @@ import ee.ria.DigiDoc.R;
 import ee.ria.DigiDoc.android.crypto.create.CryptoCreateViewModel;
 import ee.ria.DigiDoc.android.eid.EIDHomeViewModel;
 import ee.ria.DigiDoc.android.main.diagnostics.DiagnosticsView;
+import ee.ria.DigiDoc.android.main.diagnostics.DiagnosticsViewModel;
+import ee.ria.DigiDoc.android.main.diagnostics.source.DiagnosticsDataSource;
+import ee.ria.DigiDoc.android.main.diagnostics.source.FileSystemDiagnosticsDataSource;
 import ee.ria.DigiDoc.android.main.home.HomeViewModel;
 import ee.ria.DigiDoc.android.main.settings.SettingsDataStore;
 import ee.ria.DigiDoc.android.signature.create.SignatureCreateViewModel;
@@ -73,7 +78,6 @@ import ee.ria.DigiDoc.android.utils.LocaleService;
 import ee.ria.DigiDoc.android.utils.TSLUtil;
 import ee.ria.DigiDoc.android.utils.navigator.Navigator;
 import ee.ria.DigiDoc.android.utils.navigator.conductor.ConductorNavigator;
-import ee.ria.DigiDoc.configuration.util.UserAgentUtil;
 import ee.ria.DigiDoc.configuration.ConfigurationConstants;
 import ee.ria.DigiDoc.configuration.ConfigurationManager;
 import ee.ria.DigiDoc.configuration.ConfigurationManagerService;
@@ -81,12 +85,13 @@ import ee.ria.DigiDoc.configuration.ConfigurationProperties;
 import ee.ria.DigiDoc.configuration.ConfigurationProvider;
 import ee.ria.DigiDoc.configuration.loader.CachedConfigurationHandler;
 import ee.ria.DigiDoc.configuration.util.FileUtils;
+import ee.ria.DigiDoc.configuration.util.UserAgentUtil;
 import ee.ria.DigiDoc.crypto.RecipientRepository;
 import ee.ria.DigiDoc.sign.SignLib;
 import ee.ria.DigiDoc.smartcardreader.SmartCardReaderManager;
 import ee.ria.DigiDoc.smartcardreader.acs.AcsSmartCardReader;
 import ee.ria.DigiDoc.smartcardreader.identiv.IdentivSmartCardReader;
-import io.reactivex.plugins.RxJavaPlugins;
+import io.reactivex.rxjava3.plugins.RxJavaPlugins;
 import timber.log.Timber;
 
 public class Application extends android.app.Application {
@@ -113,7 +118,7 @@ public class Application extends android.app.Application {
         try {
             tslFiles = getAssets().list(assetsPath);
         } catch (IOException e) {
-            Timber.e(e, "Failed to get folder list: %s", assetsPath);
+            Timber.log(Log.ERROR, e, "Failed to get folder list: %s", assetsPath);
         }
 
         if (tslFiles != null && tslFiles.length > 0) {
@@ -140,7 +145,7 @@ public class Application extends android.app.Application {
                 return assetsTslVersion != null && assetsTslVersion > cachedTslVersion;
             } catch (Exception e) {
                 String message = "Error comparing sequence number between assets and cached TSLs";
-                Timber.e(e, message);
+                Timber.log(Log.ERROR, e, message);
                 return false;
             }
         }
@@ -151,7 +156,7 @@ public class Application extends android.app.Application {
                 StandardCharsets.UTF_8))) {
             FileUtils.writeToFile(reader, destionationDir, fileName);
         } catch (IOException ex) {
-            Timber.e(ex, "Failed to copy file: %s from assets", fileName);
+            Timber.log(Log.ERROR, ex, "Failed to copy file: %s from assets", fileName);
         }
     }
 
@@ -192,7 +197,7 @@ public class Application extends android.app.Application {
     }
 
     private void setupRxJava() {
-        RxJavaPlugins.setErrorHandler(throwable -> Timber.e(throwable, "RxJava error handler"));
+        RxJavaPlugins.setErrorHandler(throwable -> Timber.log(Log.ERROR, throwable, "RxJava error handler"));
     }
 
     private void setupConfiguration() {
@@ -348,6 +353,10 @@ public class Application extends android.app.Application {
                 FileSystemSignatureContainerDataSource fileSystemSignatureContainerDataSource);
 
         @SuppressWarnings("unused")
+        @Binds abstract DiagnosticsDataSource diagnosticsDataSource(
+                FileSystemDiagnosticsDataSource fileSystemDiagnosticsDataSource);
+
+        @SuppressWarnings("unused")
         @Binds @IntoMap @ClassKey(HomeViewModel.class)
         abstract ViewModel mainHomeViewModel(HomeViewModel homeViewModel);
 
@@ -358,6 +367,10 @@ public class Application extends android.app.Application {
         @SuppressWarnings("unused")
         @Binds @IntoMap @ClassKey(SignatureCreateViewModel.class)
         abstract ViewModel signatureCreateViewModel(SignatureCreateViewModel viewModel);
+
+        @SuppressWarnings("unused")
+        @Binds @IntoMap @ClassKey(DiagnosticsViewModel.class)
+        abstract ViewModel diagnosticsViewModel(DiagnosticsViewModel viewModel);
 
         @SuppressWarnings("unused")
         @Binds @IntoMap @ClassKey(SignatureUpdateViewModel.class)

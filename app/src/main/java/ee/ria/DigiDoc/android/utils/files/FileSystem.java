@@ -4,9 +4,9 @@ import static ee.ria.DigiDoc.android.Constants.DIR_EXTERNALLY_OPENED_FILES;
 import static ee.ria.DigiDoc.android.Constants.DIR_SIGNATURE_CONTAINERS;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.ByteSource;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 
@@ -21,10 +21,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
 import ee.ria.DigiDoc.common.FileUtil;
+import ee.ria.DigiDoc.crypto.CryptoContainer;
 import ee.ria.DigiDoc.sign.SignedContainer;
 import timber.log.Timber;
 
@@ -78,7 +80,9 @@ public final class FileSystem {
      * @throws IOException When something fails.
      */
     public File generateSignatureContainerFile(String name) throws IOException {
-        File file = increaseCounterIfExists(new File(signatureContainersDir(), FilenameUtils.getName(name)));
+        File file = increaseCounterIfExists(new File(signatureContainersDir(),
+                FilenameUtils.getName(
+                        FileUtil.sanitizeString(name, ""))));
         File fileInDirectory = FileUtil.getFileInDirectory(file, signatureContainersDir());
         Files.createParentDirs(fileInDirectory);
         return file;
@@ -146,12 +150,7 @@ public final class FileSystem {
      */
     public static boolean isEmptyFileInList(ImmutableList<FileStream> fileStreams) {
         for (FileStream fileStream : fileStreams) {
-            try {
-                if (fileStream.source().isEmpty()) {
-                    return true;
-                }
-            } catch (IOException e) {
-                Timber.e(e, "Invalid file size");
+            if (fileStream.fileSize() == 0) {
                 return true;
             }
         }
@@ -168,7 +167,7 @@ public final class FileSystem {
      public static ImmutableList<FileStream> getFilesWithValidSize(ImmutableList<FileStream> fileStreams) throws IOException {
          List<FileStream> validFileStreams = new ArrayList<>();
          for (FileStream fileStream : fileStreams) {
-             if (!fileStream.source().isEmpty()) {
+             if (fileStream.fileSize() != 0) {
                  validFileStreams.add(fileStream);
              }
          }
@@ -188,11 +187,24 @@ public final class FileSystem {
                  SignedContainer signedContainer = SignedContainer.open(containerFile);
                  return signedContainer.hasEmptyFiles();
              } catch (Exception e) {
-                 Timber.e(e, "Unable to check files in container");
+                 Timber.log(Log.ERROR, e, "Unable to check files in container");
                  return false;
              }
          }
          return false;
+    }
+
+    /**
+     * Filter out container files
+     *
+     * @param files List of files.
+     * @return ImmutableList<File> of containers only.
+     */
+    public static ImmutableList<File> filterContainers(ImmutableList<File> files) {
+        return ImmutableList.copyOf(files.stream()
+                .filter(file -> SignedContainer.isContainer(file) ||
+                        CryptoContainer.isCryptoContainer(file))
+                .collect(Collectors.toList()));
     }
 
     private File cacheDir() {
@@ -206,7 +218,8 @@ public final class FileSystem {
      * @return File with absolute path to file in cache directory.
      */
     private File getCacheFile(String name) throws IOException {
-        File cacheFile = new File(cacheDir(), FilenameUtils.getName(name));
+        File cacheFile = new File(cacheDir(), String.format(Locale.US, "%s",
+                FilenameUtils.getName(FileUtil.sanitizeString(name, ""))));
         return FileUtil.getFileInDirectory(cacheFile, cacheDir());
     }
 
@@ -214,14 +227,14 @@ public final class FileSystem {
         File dir = new File(application.getFilesDir(), DIR_SIGNATURE_CONTAINERS);
         boolean isDirsCreated = dir.mkdirs();
         if (isDirsCreated) {
-            Timber.d("Directories created for %s", dir.getPath());
+            Timber.log(Log.DEBUG, "Directories created for %s", dir.getPath());
         }
         return dir;
     }
 
     private static File increaseCounterIfExists(File file) {
         File directory = file.getParentFile();
-        String fileName = FileUtil.sanitizeString(file.getName(), '_');
+        String fileName = FileUtil.sanitizeString(file.getName(), "");
         String name = Files.getNameWithoutExtension(fileName);
         String ext = Files.getFileExtension(fileName);
         int i = 1;
@@ -251,7 +264,7 @@ public final class FileSystem {
         boolean isDirCreated = dir.mkdir();
 
         if (isDirsCreated || isDirCreated) {
-            Timber.d("Directories created for %s", directory.getPath());
+            Timber.log(Log.DEBUG, "Directories created for %s", directory.getPath());
         }
 
         return dir;

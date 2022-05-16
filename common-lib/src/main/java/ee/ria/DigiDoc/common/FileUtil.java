@@ -8,8 +8,20 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import android.net.Uri;
+import android.webkit.URLUtil;
+
+import org.apache.commons.io.FilenameUtils;
+
+import java.io.File;
+import java.io.IOException;
 
 public class FileUtil {
+
+    public static final String RESTRICTED_FILENAME_CHARACTERS_AS_STRING = "@%:^?[]\\'\"”’{}#&`\\\\~«»/´";
+    public static final String RTL_CHARACTERS_AS_STRING = "" + '\u200E' + '\u200F' + '\u202E' + '\u202A' + '\u202B';
+    public static final String RESTRICTED_FILENAME_CHARACTERS_AND_RTL_CHARACTERS_AS_STRING = RESTRICTED_FILENAME_CHARACTERS_AS_STRING + RTL_CHARACTERS_AS_STRING;
+    private static final String ALLOWED_URL_CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_,.:/%;+=@?&!()";
 
     /**
      * Check if file path is in cache directory
@@ -32,24 +44,50 @@ public class FileUtil {
      * @param replacement Replacement to replace invalid characters with
      * @return String with valid characters
      */
-    public static String sanitizeString(String input, char replacement) {
+    public static String sanitizeString(String input, String replacement) {
         if (input == null) {
             return null;
         }
 
-        String allowedCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_,.:/%;+=@?&()";
-
         StringBuilder sb = new StringBuilder(input.length());
 
-        for (int offset = 0; offset < input.length(); offset++) {
-            char c = input.charAt(offset);
+        if (!URLUtil.isValidUrl(input) && !isRawUrl(input)) {
+            for (int offset = 0; offset < input.length(); offset++) {
+                char c = input.charAt(offset);
 
-            if (allowedCharacters.indexOf(c) == -1) {
-                sb.append(replacement);
+                if (RESTRICTED_FILENAME_CHARACTERS_AND_RTL_CHARACTERS_AS_STRING.indexOf(c) != -1) {
+                    sb.append(replacement);
+                } else {
+                    sb.append(c);
+                }
+            }
+        } else if (!isRawUrl(input)) {
+            return normalizeUri(Uri.parse(input)).toString();
+        }
+
+        return !sb.toString().equals("") ?
+                FilenameUtils.getName(FilenameUtils.normalize(sb.toString())) :
+                FilenameUtils.normalize(input);
+    }
+
+    public static Uri normalizeUri(Uri uri) {
+        if (uri == null) {
+            return null;
+        }
+
+        String uriString = uri.toString();
+
+        StringBuilder sb = new StringBuilder(uriString.length());
+
+        for (int offset = 0; offset < uriString.length(); offset++) {
+            int i = ALLOWED_URL_CHARACTERS.indexOf(uriString.charAt(offset));
+
+            if (i == -1) {
+                sb.append("");
             }
             else {
                 // Coverity does not want to see usages of the original string
-                sb.append(allowedCharacters.charAt(allowedCharacters.indexOf(c)));
+                sb.append(ALLOWED_URL_CHARACTERS.charAt(i));
             }
         }
 

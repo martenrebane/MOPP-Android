@@ -1,9 +1,12 @@
 package ee.ria.DigiDoc.android.signature.update;
 
 import android.content.Context;
+import android.content.res.Configuration;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -17,9 +20,10 @@ import ee.ria.DigiDoc.android.signature.update.mobileid.MobileIdResponse;
 import ee.ria.DigiDoc.android.signature.update.mobileid.MobileIdView;
 import ee.ria.DigiDoc.android.signature.update.smartid.SmartIdResponse;
 import ee.ria.DigiDoc.android.signature.update.smartid.SmartIdView;
-import io.reactivex.Observable;
+import io.reactivex.rxjava3.core.Observable;
 
-import static com.jakewharton.rxbinding2.widget.RxRadioGroup.checkedChanges;
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static com.jakewharton.rxbinding4.widget.RxRadioGroup.checkedChanges;
 
 public final class SignatureUpdateSignatureAddView extends LinearLayout {
 
@@ -49,31 +53,23 @@ public final class SignatureUpdateSignatureAddView extends LinearLayout {
         setOrientation(VERTICAL);
         inflate(context, R.layout.signature_update_signature_add, this);
         methodView = findViewById(R.id.signatureUpdateSignatureAddMethod);
-        setSignatureMethodsContentDescription();
         mobileIdView = findViewById(R.id.signatureUpdateMobileId);
         smartIdView = findViewById(R.id.signatureUpdateSmartId);
         idCardView = findViewById(R.id.signatureUpdateIdCard);
         methodChanges = checkedChanges(methodView).skipInitialValue().publish().autoConnect();
 
-        methodView.findViewById(R.id.signatureUpdateSignatureAddMethodMobileId).setContentDescription(getResources().getString(R.string.signature_update_signature_selected_method_mobile_id, 1, 3));
-        methodView.findViewById(R.id.signatureUpdateSignatureAddMethodSmartId).setContentDescription(getResources().getString(R.string.signature_update_signature_selected_method_smart_id, 2, 3));
-        methodView.findViewById(R.id.signatureUpdateSignatureAddMethodIdCard).setContentDescription(getResources().getString(R.string.signature_update_signature_selected_method_id_card, 3, 3));
-        
-        setupContentDescriptions(findViewById(R.id.signatureUpdateSignatureAddMethodMobileId), getContext().getString(R.string.signature_update_signature_chosen_method_mobile_id));
-        setupContentDescriptions(findViewById(R.id.signatureUpdateSignatureAddMethodSmartId), getContext().getString(R.string.signature_update_signature_chosen_method_smart_id));
-        setupContentDescriptions(findViewById(R.id.signatureUpdateSignatureAddMethodIdCard), getContext().getString(R.string.signature_update_signature_chosen_method_id_card));
+        setupContentDescriptions(findViewById(R.id.signatureUpdateSignatureAddMethodMobileId),
+                getResources().getString(R.string.signature_update_signature_selected_method_mobile_id, 1, 3));
+        setupContentDescriptions(findViewById(R.id.signatureUpdateSignatureAddMethodSmartId),
+                getResources().getString(R.string.signature_update_signature_selected_method_smart_id, 2, 3));
+        setupContentDescriptions(findViewById(R.id.signatureUpdateSignatureAddMethodIdCard),
+                getResources().getString(R.string.signature_update_signature_selected_method_id_card, 3, 3));
     }
 
-    private void setSignatureMethodsContentDescription() {
-        methodView.findViewById(R.id.signatureUpdateSignatureAddMethodMobileId).setContentDescription(
-                getResources().getString(R.string.signature_update_signature_add_method) + " " + getResources().getString(R.string.signature_update_signature_add_method_mobile_id)
-        );
-        methodView.findViewById(R.id.signatureUpdateSignatureAddMethodSmartId).setContentDescription(
-                getResources().getString(R.string.signature_update_signature_add_method) + " " + getResources().getString(R.string.signature_update_signature_add_method_smart_id)
-        );
-        methodView.findViewById(R.id.signatureUpdateSignatureAddMethodIdCard).setContentDescription(
-                getResources().getString(R.string.signature_update_signature_add_method) + " " + getResources().getString(R.string.signature_update_signature_add_method_id_card)
-        );
+    @Override
+    protected void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        setLayoutParams(new FrameLayout.LayoutParams(MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     }
 
     public Observable<Integer> methodChanges() {
@@ -132,17 +128,17 @@ public final class SignatureUpdateSignatureAddView extends LinearLayout {
 
     public void response(SignatureAddResponse response) {
         if (response == null && mobileIdView.getVisibility() == VISIBLE) {
-            mobileIdView.response(null);
+            mobileIdView.response(null, null);
         } else if (response == null && smartIdView.getVisibility() == VISIBLE) {
-            smartIdView.response(null);
+            smartIdView.response(null, methodView);
         } else if (response == null && idCardView.getVisibility() == VISIBLE) {
-            idCardView.response(null);
+            idCardView.response(null, methodView);
         } else if (response instanceof MobileIdResponse) {
-            mobileIdView.response((MobileIdResponse) response);
+            mobileIdView.response((MobileIdResponse) response, null);
         } else if (response instanceof SmartIdResponse) {
-            smartIdView.response((SmartIdResponse) response);
+            smartIdView.response((SmartIdResponse) response, null);
         } else if (response instanceof IdCardResponse) {
-            idCardView.response((IdCardResponse) response);
+            idCardView.response((IdCardResponse) response, methodView);
         } else {
             throw new IllegalArgumentException("Unknown response " + response);
         }
@@ -155,6 +151,11 @@ public final class SignatureUpdateSignatureAddView extends LinearLayout {
                 super.onInitializeAccessibilityNodeInfo(host, info);
                 info.setContentDescription(contentDescription);
                 info.setCheckable(false);
+                info.setClickable(false);
+                info.setClassName("");
+                info.setPackageName("");
+                info.setText(contentDescription);
+                info.setViewIdResourceName("");
                 info.removeAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SET_SELECTION);
             }
         });

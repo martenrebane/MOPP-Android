@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 - 2021 Riigi Infosüsteemi Amet
+ * Copyright 2017 - 2022 Riigi Infosüsteemi Amet
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,25 +19,22 @@
 
 package ee.ria.DigiDoc.mobileid.rest;
 
+import android.util.Log;
+
 import org.bouncycastle.util.encoders.Base64;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 import ee.ria.DigiDoc.common.CertificateUtil;
@@ -47,6 +44,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.converter.scalars.ScalarsConverterFactory;
 import timber.log.Timber;
 
 public class ServiceGenerator {
@@ -56,88 +54,36 @@ public class ServiceGenerator {
 
     private static HttpLoggingInterceptor loggingInterceptor;
 
-    public static <S> S createService(Class<S> serviceClass, SSLContext sslContext, String midSignServiceUrl, ArrayList<String> certBundle) throws CertificateException, NoSuchAlgorithmException {
-        Timber.d("Creating new retrofit instance");
+    public static <S> S createService(Class<S> serviceClass, SSLContext sslContext, String midSignServiceUrl, ArrayList<String> certBundle, TrustManager[] trustManagers) throws CertificateException, NoSuchAlgorithmException {
+        Timber.log(Log.DEBUG, "Creating new retrofit instance");
         return new Retrofit.Builder()
                 .baseUrl(midSignServiceUrl + "/")
+                .addConverterFactory(ScalarsConverterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
-                .client(buildHttpClient(sslContext, midSignServiceUrl, certBundle))
+                .client(buildHttpClient(sslContext, midSignServiceUrl, certBundle, trustManagers))
                 .build()
                 .create(serviceClass);
     }
 
-    private static OkHttpClient buildHttpClient(SSLContext sslContext, String midSignServiceUrl, ArrayList<String> certBundle) throws CertificateException, NoSuchAlgorithmException {
-        Timber.d("Building new httpClient");
+    private static OkHttpClient buildHttpClient(SSLContext sslContext, String midSignServiceUrl, ArrayList<String> certBundle, TrustManager[] trustManagers) throws CertificateException, NoSuchAlgorithmException {
+        Timber.log(Log.DEBUG, "Building new httpClient");
         OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder()
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .certificatePinner(trustedCertificates(midSignServiceUrl, certBundle));
         addLoggingInterceptor(httpClientBuilder);
         if (sslContext != null) {
             try {
-                httpClientBuilder.sslSocketFactory(sslContext.getSocketFactory(), getTrustManager());
+                httpClientBuilder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) trustManagers[0]);
             } catch (Exception e) {
-                Timber.e(e, "Error building httpClient with sslContext");
+                Timber.log(Log.ERROR, e, "Error building httpClient with sslContext");
             }
         }
         return httpClientBuilder.build();
     }
 
-    private static X509TrustManager getTrustManager() throws NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
-        KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        trustStore.load(null, null);
-
-        final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        trustManagerFactory.init((KeyStore) null);
-
-        final TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-
-        return new X509TrustManager() {
-            @Override
-            public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-                checkTrustManagerCertificates(trustManagers, CERT_CHECK.CHECK_CLIENT, x509Certificates, s);
-
-            }
-
-            @Override
-            public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-                checkTrustManagerCertificates(trustManagers, CERT_CHECK.CHECK_SERVER, x509Certificates, s);
-            }
-
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return getCertificateAcceptedIssuers(trustManagers);
-            }
-        };
-    }
-
-    private static X509Certificate[] getCertificateAcceptedIssuers(TrustManager[] trustManagers) {
-        for (TrustManager trustManager: trustManagers) {
-            if (trustManager instanceof X509TrustManager) {
-                return ((X509TrustManager) trustManager).getAcceptedIssuers();
-            }
-        }
-
-        return null;
-    }
-
-    private static void checkTrustManagerCertificates(TrustManager[] trustManagers, CERT_CHECK certCheck, X509Certificate[] x509Certificates, String s) throws CertificateException {
-        for (TrustManager trustManager: trustManagers) {
-            if (trustManager instanceof X509TrustManager) {
-                switch (certCheck) {
-                    case CHECK_CLIENT:
-                        ((X509TrustManager) trustManager).checkClientTrusted(x509Certificates, s);
-                        break;
-                    case CHECK_SERVER:
-                        ((X509TrustManager) trustManager).checkServerTrusted(x509Certificates, s);
-                        break;
-                }
-            }
-        }
-    }
-
     private static void addLoggingInterceptor(OkHttpClient.Builder httpClientBuilder) {
         if (BuildConfig.DEBUG) {
-            Timber.d("Adding logging interceptor to HTTP client");
+            Timber.log(Log.DEBUG, "Adding logging interceptor to HTTP client");
             if (loggingInterceptor == null) {
                 loggingInterceptor = new HttpLoggingInterceptor();
                 loggingInterceptor.level(HttpLoggingInterceptor.Level.BODY);
@@ -159,7 +105,7 @@ public class ServiceGenerator {
                     sha256Certificates[i] = "sha256/" + getSHA256FromCertificate(CertificateUtil.x509Certificate(pemCert));
                 }
             } catch (CertificateException | NoSuchAlgorithmException e) {
-                Timber.e(e, "Failed to convert to Certificate object");
+                Timber.log(Log.ERROR, e, "Failed to convert to Certificate object");
                 throw e;
             }
 
@@ -181,7 +127,7 @@ public class ServiceGenerator {
         try {
             return new URI(url);
         } catch (URISyntaxException e) {
-            Timber.e(e, "Failed to convert URI from URL");
+            Timber.log(Log.ERROR, e, "Failed to convert URI from URL");
             return null;
         }
     }
@@ -194,7 +140,7 @@ public class ServiceGenerator {
 
             return new String(base64EncodedHash, StandardCharsets.UTF_8);
         } catch (NoSuchAlgorithmException e) {
-            Timber.e(e, "Unable to get instance of algorithm");
+            Timber.log(Log.ERROR, e, "Unable to get instance of algorithm");
             throw e;
         }
     }

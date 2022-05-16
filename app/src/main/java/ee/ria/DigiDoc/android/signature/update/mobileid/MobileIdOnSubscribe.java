@@ -19,8 +19,8 @@ import ee.ria.DigiDoc.mobileid.dto.response.RESTServiceFault;
 import ee.ria.DigiDoc.mobileid.service.MobileSignService;
 import ee.ria.DigiDoc.sign.SignLib;
 import ee.ria.DigiDoc.sign.SignedContainer;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.rxjava3.core.ObservableEmitter;
+import io.reactivex.rxjava3.core.ObservableOnSubscribe;
 
 import static ee.ria.DigiDoc.mobileid.dto.request.MobileCreateSignatureRequest.toJson;
 import static ee.ria.DigiDoc.mobileid.service.MobileSignConstants.ACCESS_TOKEN_PASS;
@@ -63,10 +63,10 @@ public final class MobileIdOnSubscribe implements ObservableOnSubscribe<MobileId
                                 .fromJson(intent.getStringExtra(SERVICE_FAULT));
                         if (fault.getStatus() != null) {
                             emitter.onError(MobileIdMessageException
-                                    .create(navigator.activity(), fault.getStatus()));
+                                    .create(navigator.activity(), fault.getStatus(), fault.getDetailMessage()));
                         } else {
                             emitter.onError(MobileIdMessageException
-                                    .create(navigator.activity(), fault.getResult()));
+                                    .create(navigator.activity(), fault.getResult(), fault.getDetailMessage()));
                         }
                         break;
                     case CREATE_SIGNATURE_CHALLENGE:
@@ -89,7 +89,7 @@ public final class MobileIdOnSubscribe implements ObservableOnSubscribe<MobileId
                                 break;
                             default:
                                 emitter.onError(MobileIdMessageException
-                                        .create(navigator.activity(), status.getStatus()));
+                                        .create(navigator.activity(), status.getStatus(), null));
                                 break;
                         }
                         break;

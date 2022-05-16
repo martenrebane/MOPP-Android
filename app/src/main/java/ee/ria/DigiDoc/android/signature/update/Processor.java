@@ -9,6 +9,7 @@ import static ee.ria.DigiDoc.android.utils.IntentUtils.parseGetContentIntent;
 
 import android.app.Application;
 import android.content.Context;
+import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.Toast;
 
@@ -31,6 +32,7 @@ import ee.ria.DigiDoc.android.accessibility.AccessibilityUtils;
 import ee.ria.DigiDoc.android.crypto.create.CryptoCreateScreen;
 import ee.ria.DigiDoc.android.signature.data.SignatureContainerDataSource;
 import ee.ria.DigiDoc.android.utils.IntentUtils;
+import ee.ria.DigiDoc.android.utils.SivaUtil;
 import ee.ria.DigiDoc.android.utils.ToastUtil;
 import ee.ria.DigiDoc.android.utils.files.FileAlreadyExistsException;
 import ee.ria.DigiDoc.android.utils.files.FileStream;
@@ -39,13 +41,12 @@ import ee.ria.DigiDoc.android.utils.navigator.Navigator;
 import ee.ria.DigiDoc.android.utils.navigator.Transaction;
 import ee.ria.DigiDoc.common.FileUtil;
 import ee.ria.DigiDoc.crypto.CryptoContainer;
-import ee.ria.DigiDoc.sign.SignatureStatus;
 import ee.ria.DigiDoc.sign.SignedContainer;
-import io.reactivex.Observable;
-import io.reactivex.ObservableSource;
-import io.reactivex.ObservableTransformer;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.ObservableSource;
+import io.reactivex.rxjava3.core.ObservableTransformer;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import timber.log.Timber;
 
 final class Processor implements ObservableTransformer<Action, Result> {
@@ -89,21 +90,24 @@ final class Processor implements ObservableTransformer<Action, Result> {
                                         .map(ignored ->
                                                 Result.ContainerLoadResult.success(container, null,
                                                         false))
-                                        .startWith(Result.ContainerLoadResult.success(container,
+                                        .startWithItem(Result.ContainerLoadResult.success(container,
                                                 null, true));
                             } else {
                                 final Observable<Result.ContainerLoadResult> just = Observable
                                         .just(Result.ContainerLoadResult.success(container,
                                                 action.signatureAddMethod(),
                                                 action.signatureAddSuccessMessageVisible()));
-                                sendContainerStatusAccessibilityMessage(container, application.getApplicationContext());
+                                if (!action.isExistingContainer()) {
+                                    announceAccessibilityFilesAddedEvent(application.getApplicationContext(),
+                                            container.dataFiles().size());
+                                }
                                 return just;
                             }
                         })
                         .onErrorReturn(Result.ContainerLoadResult::failure)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .startWith(Result.ContainerLoadResult.progress()));
+                        .startWithItem(Result.ContainerLoadResult.progress()));
 
         nameUpdate = upstream -> upstream.switchMap(action -> {
             File containerFile = action.containerFile();
@@ -155,7 +159,7 @@ final class Processor implements ObservableTransformer<Action, Result> {
                         })
                         .onErrorReturn(throwable ->
                                 Result.NameUpdateResult.failure(containerFile, throwable))
-                        .startWith(Result.NameUpdateResult.progress(containerFile));
+                        .startWithItem(Result.NameUpdateResult.progress(containerFile));
             }
         });
 
@@ -183,7 +187,7 @@ final class Processor implements ObservableTransformer<Action, Result> {
                                                 .onErrorReturn(Result.DocumentsAddResult::failure)
                                                 .subscribeOn(Schedulers.io())
                                                 .observeOn(AndroidSchedulers.mainThread())
-                                                .startWith(Result.DocumentsAddResult.adding());
+                                                .startWithItem(Result.DocumentsAddResult.adding());
                                     } else {
                                         return Observable.just(Result.DocumentsAddResult.clear());
                                     }
@@ -193,33 +197,40 @@ final class Processor implements ObservableTransformer<Action, Result> {
                 });
 
         documentView = upstream -> upstream.switchMap(action -> {
-            File containerFile = action.containerFile();
-            return signatureContainerDataSource
-                    .getDocumentFile(containerFile, action.document())
-                    .toObservable()
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .map(documentFile -> {
-                        Transaction transaction;
-                        boolean isSignedPdfDataFile =
-                                getFileExtension(containerFile.getName()).toLowerCase(Locale.US)
-                                                .equals("pdf")
-                                        && containerFile.getName().equals(documentFile.getName());
-                        if (!isSignedPdfDataFile && SignedContainer.isContainer(documentFile)) {
-                            transaction = Transaction.push(SignatureUpdateScreen
-                                    .create(true, true, documentFile, false, false));
-                        } else if (CryptoContainer.isContainerFileName(documentFile.getName())) {
-                            transaction = Transaction.push(CryptoCreateScreen.open(documentFile));
-                        } else {
-                            transaction = Transaction.activity(IntentUtils
-                                    .createViewIntent(application, documentFile,
-                                            SignedContainer.mimeType(documentFile)), null);
-                        }
-                        navigator.execute(transaction);
-                        return Result.DocumentViewResult.idle();
-                    })
-                    .onErrorReturn(ignored -> Result.DocumentViewResult.idle())
-                    .startWith(Result.DocumentViewResult.activity());
+            if (action.containerFile() == null) {
+                return Observable.just(Result.DocumentViewResult.idle());
+            } else if (action.confirmation()) {
+                return Observable
+                        .just(Result.DocumentViewResult.confirmation(action.document()));
+            } else {
+                File containerFile = action.containerFile();
+                return signatureContainerDataSource
+                        .getDocumentFile(containerFile, action.document())
+                        .toObservable()
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .map(documentFile -> {
+                            Transaction transaction;
+                            String containerFileExtension = getFileExtension(containerFile.getName()).toLowerCase(Locale.US);
+                            String documentFileExtension = getFileExtension(documentFile.getName()).toLowerCase(Locale.US);
+                            boolean isPdfInSignedPdfContainer = containerFileExtension.equals("pdf") &&
+                                    (SivaUtil.isSivaConfirmationNeeded(ImmutableList.of(FileStream.create(documentFile))) && documentFileExtension.equals("pdf"));
+                            if (!isPdfInSignedPdfContainer && SignedContainer.isContainer(documentFile)) {
+                                transaction = Transaction.push(SignatureUpdateScreen
+                                        .create(true, true, documentFile, false, false));
+                            } else if (CryptoContainer.isContainerFileName(documentFile.getName())) {
+                                transaction = Transaction.push(CryptoCreateScreen.open(documentFile));
+                            } else {
+                                transaction = Transaction.activity(IntentUtils
+                                        .createViewIntent(application, documentFile,
+                                                SignedContainer.mimeType(documentFile)), null);
+                            }
+                            navigator.execute(transaction);
+                            return Result.DocumentViewResult.idle();
+                        })
+                        .onErrorReturn(ignored -> Result.DocumentViewResult.idle())
+                        .startWithItem(Result.DocumentViewResult.activity());
+            }
         });
 
         documentSave = upstream -> upstream.switchMap(action -> {
@@ -246,7 +257,7 @@ final class Processor implements ObservableTransformer<Action, Result> {
                                     return Result.DocumentSaveResult.idle();
                                 })
                                 .onErrorReturn(ignored -> Result.DocumentSaveResult.idle())
-                                .startWith(Result.DocumentSaveResult.activity());
+                                .startWithItem(Result.DocumentSaveResult.activity());
                     });
         });
 
@@ -259,7 +270,7 @@ final class Processor implements ObservableTransformer<Action, Result> {
                 if (action.documents().size() == 1) {
                     boolean isFileDeleted = action.containerFile().delete();
                     if (isFileDeleted) {
-                        Timber.d("File %s deleted", action.containerFile().getName());
+                        Timber.log(Log.DEBUG, "File %s deleted", action.containerFile().getName());
                     }
                     navigator.execute(Transaction.pop());
                     return Observable.just(Result.DocumentRemoveResult.success(null));
@@ -274,7 +285,7 @@ final class Processor implements ObservableTransformer<Action, Result> {
                             .onErrorReturn(Result.DocumentRemoveResult::failure)
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
-                            .startWith(Result.DocumentRemoveResult.progress());
+                            .startWithItem(Result.DocumentRemoveResult.progress());
                 }
             }
         });
@@ -296,7 +307,7 @@ final class Processor implements ObservableTransformer<Action, Result> {
                         .onErrorReturn(Result.SignatureRemoveResult::failure)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .startWith(Result.SignatureRemoveResult.progress());
+                        .startWithItem(Result.SignatureRemoveResult.progress());
             }
         });
 
@@ -320,7 +331,7 @@ final class Processor implements ObservableTransformer<Action, Result> {
                                             containerAdd.containerFile(), true, false))))
                             .map(containerAdd -> Result.SignatureAddResult.clear())
                             .onErrorReturn(Result.SignatureAddResult::failure)
-                            .startWith(Result.SignatureAddResult.activity());
+                            .startWithItem(Result.SignatureAddResult.activity());
                 } else {
                     return signatureAddSource.show(method);
                 }
@@ -341,7 +352,7 @@ final class Processor implements ObservableTransformer<Action, Result> {
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .onErrorReturn(Result.SignatureAddResult::failure)
-                        .startWith(Result.SignatureAddResult.activity(method));
+                        .startWithItem(Result.SignatureAddResult.activity(method));
             } else {
                 throw new IllegalArgumentException("Can't handle action " + action);
             }
@@ -384,7 +395,7 @@ final class Processor implements ObservableTransformer<Action, Result> {
     }
 
     private String assignName(Intent.NameUpdateIntent action, File containerFile) {
-        String name = FileUtil.sanitizeString(action.name(), '_');
+        String name = FileUtil.sanitizeString(action.name(), "");
         if (name != null && !name.isEmpty()) {
             return addContainerExtension(containerFile, name);
         }
@@ -392,31 +403,8 @@ final class Processor implements ObservableTransformer<Action, Result> {
         return name;
     }
 
-
-    private void sendContainerStatusAccessibilityMessage(SignedContainer container, Context context) {
-        StringBuilder messageBuilder = new StringBuilder();
-        if (container.signaturesValid()) {
-            messageBuilder.append("Container has ");
-            messageBuilder.append(container.signatures().size());
-            messageBuilder.append(" valid signatures");
-        } else {
-            int unknownSignaturesCount = container.invalidSignatureCounts().get(SignatureStatus.UNKNOWN);
-            int invalidSignatureCount = container.invalidSignatureCounts().get(SignatureStatus.INVALID);
-            messageBuilder.append("Container is invalid, contains");
-            if (unknownSignaturesCount > 0) {
-                messageBuilder.append(" ").append(context.getResources().getQuantityString(
-                        R.plurals.signature_update_signatures_unknown, unknownSignaturesCount, unknownSignaturesCount));
-            }
-            if (invalidSignatureCount > 0) {
-                messageBuilder.append(" ").append(context.getResources().getQuantityString(
-                        R.plurals.signature_update_signatures_invalid, invalidSignatureCount, invalidSignatureCount));
-            }
-        }
-        AccessibilityUtils.sendAccessibilityEvent(context, AccessibilityEvent.TYPE_ANNOUNCEMENT, messageBuilder.toString());
-    }
-
-    private void announceAccessibilityFilesAddedEvent(Context context, ImmutableList<FileStream> addedDataList) {
-        if (addedDataList.size() > 1) {
+    private void announceAccessibilityFilesAddedEvent(Context context, int addedDataList) {
+        if (addedDataList > 1) {
             AccessibilityUtils.sendAccessibilityEvent(context, AccessibilityEvent.TYPE_ANNOUNCEMENT, R.string.files_added);
         } else {
             AccessibilityUtils.sendAccessibilityEvent(context, AccessibilityEvent.TYPE_ANNOUNCEMENT, R.string.file_added);

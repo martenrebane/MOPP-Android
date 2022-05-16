@@ -11,11 +11,11 @@ import android.widget.Button;
 import ee.ria.DigiDoc.R;
 import ee.ria.DigiDoc.android.utils.SecureUtil;
 import ee.ria.DigiDoc.android.utils.files.FileAlreadyExistsException;
-import io.reactivex.Observable;
-import io.reactivex.subjects.PublishSubject;
-import io.reactivex.subjects.Subject;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.subjects.PublishSubject;
+import io.reactivex.rxjava3.subjects.Subject;
 
-import static com.jakewharton.rxbinding2.view.RxView.clicks;
+import static com.jakewharton.rxbinding4.view.RxView.clicks;
 
 public final class NameUpdateDialog extends AlertDialog {
 
@@ -31,7 +31,7 @@ public final class NameUpdateDialog extends AlertDialog {
 
         view = new NameUpdateView(getContext());
         view.setId(R.id.nameUpdateNameLabel);
-        setView(view, padding, padding, padding, padding);
+        setView(view, padding, (int)(padding / 1.2), padding, padding / 2);
 
         setButton(BUTTON_POSITIVE, getContext().getString(android.R.string.ok),
                 (OnClickListener) null);

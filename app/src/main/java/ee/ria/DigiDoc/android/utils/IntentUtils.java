@@ -4,6 +4,8 @@ import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.database.Cursor;
 import android.net.Uri;
 import android.provider.OpenableColumns;
 import android.util.Log;
@@ -20,12 +22,16 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import java.util.Locale;
 
 import ee.ria.DigiDoc.R;
 import ee.ria.DigiDoc.android.utils.files.FileStream;
@@ -210,7 +216,7 @@ public final class IntentUtils {
         return Intent
                 .createChooser(new Intent(Intent.ACTION_CREATE_DOCUMENT)
                         .addCategory(Intent.CATEGORY_OPENABLE)
-                        .putExtra(Intent.EXTRA_TITLE, FileUtil.sanitizeString(dataFile.name(), '_'))
+                        .putExtra(Intent.EXTRA_TITLE, FileUtil.sanitizeString(dataFile.name(), ""))
                         .setType(dataFile.mimeType())
                         .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION), null);
     }
@@ -222,14 +228,30 @@ public final class IntentUtils {
         return Intent
                 .createChooser(new Intent(Intent.ACTION_CREATE_DOCUMENT)
                         .addCategory(Intent.CATEGORY_OPENABLE)
-                        .putExtra(Intent.EXTRA_TITLE, FileUtil.sanitizeString(file.getName(), '_'))
+                        .putExtra(Intent.EXTRA_TITLE, FileUtil.sanitizeString(file.getName(), ""))
                         .setType(mimeType)
                         .addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION), null);
     }
 
-    public static Intent createBrowserIntent(Context context, int stringRes){
-        String url = context.getResources().getString(stringRes);
-        return new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+    public static Intent createBrowserIntent(Context context, int stringRes, Configuration configuration) {
+        String localizedUrl = context.createConfigurationContext(configuration).getText(stringRes).toString();
+        return new Intent(Intent.ACTION_VIEW, Uri.parse(localizedUrl));
+    }
+
+    private static long getFileSize(ContentResolver contentResolver, Uri uri) {
+        Cursor cursor = contentResolver.
+                query(FileUtil.normalizeUri(uri),
+                        null, null, null, null);
+        long fileSize = 0;
+        if (cursor != null) {
+            int columnIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
+            if (cursor.moveToFirst() && !cursor.isNull(columnIndex)) {
+                fileSize = cursor.getLong(columnIndex);
+            }
+            cursor.close();
+            return fileSize;
+        }
+        return fileSize;
     }
 
     private static long getFileSize(ContentResolver contentResolver, Uri uri) {

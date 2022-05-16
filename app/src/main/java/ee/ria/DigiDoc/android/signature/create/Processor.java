@@ -4,27 +4,50 @@ import static android.app.Activity.RESULT_OK;
 import static ee.ria.DigiDoc.android.utils.IntentUtils.parseGetContentIntent;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+
+import java.util.List;
 
 import javax.inject.Inject;
 
 import ee.ria.DigiDoc.android.signature.data.SignatureContainerDataSource;
+import ee.ria.DigiDoc.android.signature.update.SignatureUpdateScreen;
+import ee.ria.DigiDoc.android.utils.ClickableDialogUtil;
+import ee.ria.DigiDoc.android.utils.SivaUtil;
 import ee.ria.DigiDoc.android.utils.ToastUtil;
+import ee.ria.DigiDoc.android.utils.files.EmptyFileException;
 import ee.ria.DigiDoc.android.utils.files.FileStream;
 import ee.ria.DigiDoc.android.utils.files.FileSystem;
 import ee.ria.DigiDoc.android.utils.navigator.ActivityResult;
 import ee.ria.DigiDoc.android.utils.navigator.ActivityResultException;
 import ee.ria.DigiDoc.android.utils.navigator.Navigator;
 import ee.ria.DigiDoc.android.utils.navigator.Transaction;
+import ee.ria.DigiDoc.android.utils.widget.ConfirmationDialog;
+import ee.ria.DigiDoc.common.ActivityUtil;
+import ee.ria.DigiDoc.common.FileUtil;
+import ee.ria.DigiDoc.sign.SignedContainer;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.ObservableSource;
 import io.reactivex.rxjava3.core.ObservableTransformer;
+import io.reactivex.rxjava3.exceptions.CompositeException;
+import io.reactivex.rxjava3.schedulers.Schedulers;
+import timber.log.Timber;
 
 final class Processor implements ObservableTransformer<Action, Result> {
 
     private final ObservableTransformer<Action.ChooseFilesAction, Result.ChooseFilesResult>
             chooseFiles;
+
+    private final ConfirmationDialog sivaConfirmationDialog = new ConfirmationDialog(Activity.getContext().get(),
+            R.string.siva_send_message_dialog, R.id.sivaConfirmationDialog);
+
+    private static final ImmutableSet<String> SEND_SIVA_CONTAINER_NOTIFICATION_EXTENSIONS = ImmutableSet.<String>builder()
+            .add("ddoc", "asics", "scs")
+            .build();
 
     @Inject Processor(Navigator navigator,
                       SignatureContainerDataSource signatureContainerDataSource,
@@ -73,13 +96,27 @@ final class Processor implements ObservableTransformer<Action, Result> {
                             return addFilesToContainer(navigator, signatureContainerDataSource, application, validFiles);
                         }
                     } else {
-                        navigator.execute(Transaction.pop());
+                        if (ActivityUtil.isExternalFileOpened(navigator.activity())) {
+                            ActivityUtil.restartActivity(application.getApplicationContext(), navigator.activity());
+                        } else {
+                            navigator.execute(Transaction.pop());
+                        }
                         return Observable.just(Result.ChooseFilesResult.create());
                     }
                 })
-                .onErrorResumeNext(throwable -> {
-                    ToastUtil.showEmptyFileError(application);
+                .onErrorReturn(throwable -> {
+                    List<Throwable> exceptions = ((CompositeException) throwable).getExceptions();
+                    if (!exceptions.isEmpty()) {
+                        boolean isEmptyFileException = exceptions.stream().anyMatch(exception ->
+                                (exception instanceof EmptyFileException));
+                        if (isEmptyFileException) {
+                            ToastUtil.showEmptyFileError(Activity.getContext().get());
+                        } else {
+                            ToastUtil.showGeneralError(Activity.getContext().get());
+                        }
+                    }
                     navigator.execute(Transaction.pop());
+                    return Result.ChooseFilesResult.create();
                 });
     }
 
@@ -88,5 +125,28 @@ final class Processor implements ObservableTransformer<Action, Result> {
     public ObservableSource<Result> apply(Observable<Action> upstream) {
         return upstream.publish(shared -> Observable.mergeArray(
                 shared.ofType(Action.ChooseFilesAction.class).compose(chooseFiles)));
+    }
+
+    private Observable<Result.ChooseFilesResult> addFilesToContainer(Navigator navigator,
+                                                                     SignatureContainerDataSource signatureContainerDataSource,
+                                                                     Application application,
+                                                                     ImmutableList<FileStream> validFiles) {
+        return signatureContainerDataSource
+                .addContainer(validFiles, false)
+                .toObservable()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(containerAdd ->
+                        navigator.execute(Transaction.replace(SignatureUpdateScreen
+                                .create(containerAdd.isExistingContainer(), false,
+                                        containerAdd.containerFile(), false,
+                                        false))))
+                .doOnError(throwable1 -> {
+                    Timber.log(Log.DEBUG, throwable1, "Add signed container failed");
+                    ToastUtil.showGeneralError(application);
+
+                    navigator.execute(Transaction.pop());
+                })
+                .map(containerAdd -> Result.ChooseFilesResult.create());
     }
 }

@@ -15,6 +15,7 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.webkit.URLUtil;
 import android.widget.Button;
 
 import androidx.annotation.Nullable;
@@ -174,15 +175,17 @@ public final class Activity extends AppCompatActivity {
             intent.setDataAndType(intent.getData(), "*/*");
             rootScreenFactory.intent(intent);
         } catch (ActivityNotFoundException e) {
-            Timber.e(e, "Handling incoming file intent");
+            Timber.log(Log.ERROR, e, "Handling incoming file intent");
         }
     }
 
     private Intent sanitizeIntent(Intent intent) {
         if (intent.getDataString() != null) {
-            intent.setData(Uri.parse(FileUtil.sanitizeString(intent.getDataString(), '_')));
+            Uri normalizedUri = FileUtil.normalizeUri(Uri.parse(intent.getDataString()));
+            intent.setDataAndNormalize(normalizedUri);
         }
-        if (intent.getExtras() != null) {
+        if (intent.getExtras() != null && !(intent.getExtras().containsKey(Intent.EXTRA_REFERRER) &&
+                intent.getExtras().get(Intent.EXTRA_REFERRER).equals(R.string.application_name))) {
             intent.replaceExtras(new Bundle());
         }
         return intent;

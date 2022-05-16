@@ -2,8 +2,7 @@ package ee.ria.DigiDoc.android.signature.update;
 
 import static android.view.accessibility.AccessibilityEvent.TYPE_ANNOUNCEMENT;
 import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED;
-import static com.jakewharton.rxbinding2.support.v7.widget.RxToolbar.navigationClicks;
-import static com.jakewharton.rxbinding2.view.RxView.clicks;
+
 import static ee.ria.DigiDoc.android.utils.TintUtils.tintCompoundDrawables;
 import static ee.ria.DigiDoc.android.utils.rxbinding.app.RxDialog.cancels;
 
@@ -12,6 +11,9 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Parcelable;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.Button;
@@ -19,12 +21,9 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.Toolbar;
 
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
@@ -40,9 +39,11 @@ import ee.ria.DigiDoc.android.accessibility.AccessibilityUtils;
 import ee.ria.DigiDoc.android.signature.update.mobileid.MobileIdResponse;
 import ee.ria.DigiDoc.android.signature.update.smartid.SmartIdResponse;
 import ee.ria.DigiDoc.android.utils.DateUtil;
+import ee.ria.DigiDoc.android.utils.SivaUtil;
 import ee.ria.DigiDoc.android.utils.ViewDisposables;
 import ee.ria.DigiDoc.android.utils.ViewSavedState;
 import ee.ria.DigiDoc.android.utils.container.NameUpdateDialog;
+import ee.ria.DigiDoc.android.utils.files.FileStream;
 import ee.ria.DigiDoc.android.utils.files.FileSystem;
 import ee.ria.DigiDoc.android.utils.mvi.MviView;
 import ee.ria.DigiDoc.android.utils.mvi.State;
@@ -50,12 +51,20 @@ import ee.ria.DigiDoc.android.utils.navigator.Navigator;
 import ee.ria.DigiDoc.android.utils.navigator.Transaction;
 import ee.ria.DigiDoc.android.utils.widget.ConfirmationDialog;
 import ee.ria.DigiDoc.android.utils.widget.NotificationDialog;
+import ee.ria.DigiDoc.common.ActivityUtil;
 import ee.ria.DigiDoc.sign.DataFile;
 import ee.ria.DigiDoc.sign.NoInternetConnectionException;
 import ee.ria.DigiDoc.sign.Signature;
-import io.reactivex.Observable;
-import io.reactivex.subjects.PublishSubject;
-import io.reactivex.subjects.Subject;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.subjects.PublishSubject;
+import io.reactivex.rxjava3.subjects.Subject;
+
+import static android.view.accessibility.AccessibilityEvent.TYPE_ANNOUNCEMENT;
+import static android.view.accessibility.AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED;
+import static com.jakewharton.rxbinding4.view.RxView.clicks;
+import static com.jakewharton.rxbinding4.widget.RxToolbar.navigationClicks;
+import static ee.ria.DigiDoc.android.utils.TintUtils.tintCompoundDrawables;
+import static ee.ria.DigiDoc.android.utils.rxbinding.app.RxDialog.cancels;
 
 @SuppressLint("ViewConstructor")
 public final class SignatureUpdateView extends LinearLayout implements MviView<Intent, ViewState> {
@@ -89,6 +98,7 @@ public final class SignatureUpdateView extends LinearLayout implements MviView<I
     private final View buttonSpace;
     private final Button signatureAddButton;
     private final SignatureUpdateErrorDialog errorDialog;
+    private final ConfirmationDialog sivaConfirmationDialog;
     private final ConfirmationDialog documentRemoveConfirmationDialog;
     private final ConfirmationDialog signatureRemoveConfirmationDialog;
     private final SignatureUpdateSignatureAddDialog signatureAddDialog;
@@ -111,10 +121,12 @@ public final class SignatureUpdateView extends LinearLayout implements MviView<I
     private final Subject<Intent.SignatureAddIntent> signatureAddIntentSubject =
             PublishSubject.create();
 
+    @Nullable private DataFile sivaConfirmation;
     @Nullable private DataFile documentRemoveConfirmation;
     @Nullable private Signature signatureRemoveConfirmation;
 
     private boolean signingInfoDelegated = false;
+    private ProgressBar documentAddProgressBar;
     ProgressBar progressBar;
     SignatureUpdateProgressBar signatureUpdateProgressBar = new SignatureUpdateProgressBar();
 
@@ -150,6 +162,7 @@ public final class SignatureUpdateView extends LinearLayout implements MviView<I
         buttonSpace = findViewById(R.id.signatureUpdateButtonSpace);
         signatureAddButton = findViewById(R.id.signatureUpdateSignatureAddButton);
         mobileIdChallengeTextView = findViewById(R.id.signatureUpdateMobileIdChallengeText);
+        documentAddProgressBar = findViewById(R.id.signatureAddDocumentProgress);
 
         listView.setLayoutManager(new LinearLayoutManager(context));
         listView.setAdapter(adapter = new SignatureUpdateAdapter());
@@ -158,15 +171,18 @@ public final class SignatureUpdateView extends LinearLayout implements MviView<I
                 R.string.signature_update_remove_document_confirmation_message, R.id.documentRemovalDialog);
         signatureRemoveConfirmationDialog = new ConfirmationDialog(context,
                 R.string.signature_update_signature_remove_confirmation_message, R.id.signatureRemovalDialog);
+        sivaConfirmationDialog = new ConfirmationDialog(Activity.getContext().get(),
+                R.string.siva_send_message_dialog, R.id.sivaConfirmationDialog);
         signatureAddDialog = new SignatureUpdateSignatureAddDialog(context);
         signatureAddView = signatureAddDialog.view();
         resetSignatureAddDialog();
 
         errorDialog = new SignatureUpdateErrorDialog(context, documentsAddIntentSubject,
                 documentRemoveIntentSubject, signatureAddIntentSubject,
-                signatureRemoveIntentSubject, signatureAddDialog);
+                signatureRemoveIntentSubject, signatureAddDialog, this);
 
         progressBar = (ProgressBar) activityIndicatorView;
+        documentAddProgressBar.setVisibility(GONE);
     }
 
     @SuppressWarnings("unchecked")
@@ -209,6 +225,8 @@ public final class SignatureUpdateView extends LinearLayout implements MviView<I
         int titleResId = isExistingContainer ? R.string.signature_update_title_existing
                 : R.string.signature_update_title_created;
         toolbarView.setTitle(titleResId);
+        toolbarView.setNavigationIcon(R.drawable.ic_clear);
+        toolbarView.setNavigationContentDescription(R.string.close);
 
         AccessibilityUtils.setAccessibilityPaneTitle(this, isExistingContainer ? getResources().getString(titleResId) : "Container signing");
 
@@ -219,9 +237,9 @@ public final class SignatureUpdateView extends LinearLayout implements MviView<I
         } else {
             sendButton.setVisibility(isExistingContainer ? VISIBLE : GONE);
             buttonSpace.setVisibility(isExistingContainer ? VISIBLE : GONE);
-            if (containerFile != null && (UNSIGNABLE_CONTAINER_EXTENSIONS.contains(
+            if (UNSIGNABLE_CONTAINER_EXTENSIONS.contains(
                     Files.getFileExtension(containerFile.getName()).toLowerCase()) ||
-                    FileSystem.isEmptyDataFileInContainer(containerFile))) {
+                    FileSystem.isEmptyDataFileInContainer(containerFile)) {
                 signatureAddButton.setVisibility(GONE);
             } else {
                 signatureAddButton.setVisibility(VISIBLE);
@@ -236,6 +254,13 @@ public final class SignatureUpdateView extends LinearLayout implements MviView<I
             dataFiles = state.container().dataFiles();
         }
         signatureAddButton.setContentDescription(getResources().getString(R.string.sign_container_button_description));
+
+        if (state.containerLoadInProgress() || state.documentsAddInProgress() ||
+                state.documentRemoveInProgress() || state.signatureRemoveInProgress()) {
+            documentAddProgressBar.setVisibility(VISIBLE);
+        } else {
+            documentAddProgressBar.setVisibility(GONE);
+        }
 
         setActivity(state.containerLoadInProgress() || state.documentsAddInProgress()
                 || state.documentViewState().equals(State.ACTIVE)
@@ -297,6 +322,14 @@ public final class SignatureUpdateView extends LinearLayout implements MviView<I
             } else {
                 mobileIdChallengeView.setText(EMPTY_CHALLENGE);
             }
+        }
+
+        sivaConfirmation = state.sivaConfirmation();
+
+        if (sivaConfirmation != null) {
+            sivaConfirmationDialog.show();
+        } else {
+            sivaConfirmationDialog.dismiss();
         }
 
         tintCompoundDrawables(sendButton);
@@ -415,8 +448,12 @@ public final class SignatureUpdateView extends LinearLayout implements MviView<I
     }
 
     private Observable<Intent.DocumentViewIntent> documentViewIntent() {
-        return adapter.documentClicks()
-                .map(document -> Intent.DocumentViewIntent.create(containerFile, document));
+        return Observable.mergeArray(adapter.documentClicks()
+                .map(document -> Intent.DocumentViewIntent.confirmation(containerFile, document)),
+                        sivaConfirmationDialog.positiveButtonClicks()
+                                .map(ignored -> Intent.DocumentViewIntent.open(containerFile, sivaConfirmation)),
+                        sivaConfirmationDialog.cancels()
+                                .map(ignored -> Intent.DocumentViewIntent.cancel()));
     }
 
     private Observable<Intent.DocumentSaveIntent> documentSaveIntent() {
@@ -438,7 +475,6 @@ public final class SignatureUpdateView extends LinearLayout implements MviView<I
                         .doOnNext(ignored -> resetSignatureAddDialog())
                         .map(ignored -> {
                             int method = viewModel.signatureAddMethod();
-                            sendMethodSelectionAccessibilityEvent(method);
                             return Intent.SignatureAddIntent.show(method, isExistingContainer, containerFile);
                         }),
                 cancels(signatureAddDialog)
@@ -463,8 +499,16 @@ public final class SignatureUpdateView extends LinearLayout implements MviView<I
     private void sendMethodSelectionAccessibilityEvent(int method) {
         String signatureMethod = getMethod(method);
         if (signatureMethod != null) {
-            AccessibilityUtils.sendAccessibilityEvent(getContext(), TYPE_WINDOW_STATE_CHANGED,
-                    signatureMethod + " " + getResources().getString(R.string.signature_update_signature_method_selected));
+            if (signatureMethod.equalsIgnoreCase(getResources().getString(R.string.signature_update_signature_add_method_mobile_id))) {
+                AccessibilityUtils.sendAccessibilityEvent(getContext(), TYPE_WINDOW_STATE_CHANGED,
+                        getResources().getString(R.string.signature_update_signature_chosen_method_mobile_id));
+            } else if (signatureMethod.equalsIgnoreCase(getResources().getString(R.string.signature_update_signature_add_method_smart_id))) {
+                AccessibilityUtils.sendAccessibilityEvent(getContext(), TYPE_WINDOW_STATE_CHANGED,
+                        getResources().getString(R.string.signature_update_signature_chosen_method_smart_id));
+            } else if (signatureMethod.equalsIgnoreCase(getResources().getString(R.string.signature_update_signature_add_method_id_card))) {
+                AccessibilityUtils.sendAccessibilityEvent(getContext(), TYPE_WINDOW_STATE_CHANGED,
+                        getResources().getString(R.string.signature_update_signature_chosen_method_id_card));
+            }
         }
     }
 
@@ -485,8 +529,13 @@ public final class SignatureUpdateView extends LinearLayout implements MviView<I
         disposables.attach();
         disposables.add(viewModel.viewStates().subscribe(this::render));
         viewModel.process(intents());
-        disposables.add(navigationClicks(toolbarView).subscribe(o ->
-                navigator.execute(Transaction.pop())));
+        disposables.add(navigationClicks(toolbarView).subscribe(o -> {
+            if (ActivityUtil.isExternalFileOpened(activity)) {
+                ActivityUtil.restartActivity(getContext(), activity);
+            } else {
+                navigator.execute(Transaction.pop());
+            }
+        }));
         disposables.add(adapter.scrollToTop().subscribe(ignored -> listView.scrollToPosition(0)));
         disposables.add(adapter.documentSaveClicks().subscribe(document ->
                 documentSaveIntentSubject.onNext(Intent.DocumentSaveIntent
@@ -518,6 +567,7 @@ public final class SignatureUpdateView extends LinearLayout implements MviView<I
     public void onDetachedFromWindow() {
         disposables.detach();
         signatureAddDialog.dismiss();
+        sivaConfirmationDialog.dismiss();
         signatureRemoveConfirmationDialog.dismiss();
         documentRemoveConfirmationDialog.dismiss();
         errorDialog.setOnDismissListener(null);

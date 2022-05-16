@@ -18,6 +18,7 @@ import static ee.ria.DigiDoc.sign.SignedContainer.mimeType;
 import android.app.Application;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.Toast;
 
@@ -40,10 +41,12 @@ import ee.ria.DigiDoc.android.model.idcard.IdCardDataResponse;
 import ee.ria.DigiDoc.android.model.idcard.IdCardService;
 import ee.ria.DigiDoc.android.signature.update.SignatureUpdateScreen;
 import ee.ria.DigiDoc.android.utils.ToastUtil;
+import ee.ria.DigiDoc.android.utils.files.EmptyFileException;
 import ee.ria.DigiDoc.android.utils.files.FileStream;
 import ee.ria.DigiDoc.android.utils.files.FileSystem;
 import ee.ria.DigiDoc.android.utils.navigator.Navigator;
 import ee.ria.DigiDoc.android.utils.navigator.Transaction;
+import ee.ria.DigiDoc.common.ActivityUtil;
 import ee.ria.DigiDoc.common.Certificate;
 import ee.ria.DigiDoc.common.FileUtil;
 import ee.ria.DigiDoc.crypto.CryptoContainer;
@@ -51,12 +54,12 @@ import ee.ria.DigiDoc.crypto.Pin1InvalidException;
 import ee.ria.DigiDoc.crypto.RecipientRepository;
 import ee.ria.DigiDoc.idcard.Token;
 import ee.ria.DigiDoc.sign.SignedContainer;
-import io.reactivex.Observable;
-import io.reactivex.ObservableSource;
-import io.reactivex.ObservableTransformer;
-import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.ObservableSource;
+import io.reactivex.rxjava3.core.ObservableTransformer;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import timber.log.Timber;
 
 final class Processor implements ObservableTransformer<Intent, Result> {
@@ -122,7 +125,7 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                         .onErrorReturn(Result.InitialResult::failure)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .startWith(Result.InitialResult.activity());
+                        .startWithItem(Result.InitialResult.activity());
             } else if (androidIntent != null) {
                 return parseIntent(androidIntent, application, fileSystem.getExternallyOpenedFilesDir());
             } else {
@@ -136,7 +139,9 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                             if (activityResult.resultCode() == RESULT_OK && data != null) {
                                 return parseIntent(data, application, fileSystem.getExternallyOpenedFilesDir())
                                         .onErrorReturn(throwable -> {
-                                            ToastUtil.showEmptyFileError(application);
+                                            if (throwable instanceof EmptyFileException) {
+                                                ToastUtil.showEmptyFileError(application);
+                                            }
                                             navigator.execute(Transaction.pop());
                                             return Result.InitialResult.failure(throwable);
                                         });
@@ -149,13 +154,17 @@ final class Processor implements ObservableTransformer<Intent, Result> {
         });
 
         upButtonClick = upstream -> upstream.switchMap(intent -> {
-            navigator.execute(Transaction.pop());
+            if (ActivityUtil.isExternalFileOpened(navigator.activity())) {
+                ActivityUtil.restartActivity(application.getApplicationContext(), navigator.activity());
+            } else {
+                navigator.execute(Transaction.pop());
+            }
             return Observable.empty();
         });
 
         nameUpdate = upstream -> upstream.switchMap(action -> {
-            String name = FileUtil.sanitizeString(action.name(), '_');
-            String newName = FileUtil.sanitizeString(action.newName(), '_');
+            String name = FileUtil.sanitizeString(action.name(), "");
+            String newName = FileUtil.sanitizeString(action.newName(), "");
             if (newName != null) {
                 return Observable
                         .fromCallable(() -> newName)
@@ -167,7 +176,7 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                             return result;
                         })
                         .onErrorReturn(throwable -> Result.NameUpdateResult.failure(newName, throwable))
-                        .startWith(Result.NameUpdateResult.progress(name));
+                        .startWithItem(Result.NameUpdateResult.progress(name));
             } else if (name != null) {
                 return Observable.just(Result.NameUpdateResult.show(name));
             } else {
@@ -197,7 +206,7 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                                         ImmutableList.Builder<File> builder =
                                                 ImmutableList.<File>builder().addAll(dataFiles);
                                         ImmutableList<FileStream> validFiles = FileSystem.getFilesWithValidSize(fileStreams);
-                                        ToastUtil.handleEmptyFileError(fileStreams, validFiles, application);
+                                        ToastUtil.handleEmptyFileError(validFiles, application);
                                         for (FileStream fileStream : validFiles) {
                                             File dataFile = fileSystem.cache(fileStream);
                                             if (dataFiles.contains(dataFile)) {
@@ -216,12 +225,12 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                                     })
                                     .map(Result.DataFilesAddResult::success)
                                     .onErrorReturn(throwable -> {
-                                        Timber.d(throwable, "No valid files in list");
+                                        Timber.log(Log.DEBUG, throwable, "No valid files in list");
                                         return Result.DataFilesAddResult.failure(throwable);
                                     })
                                     .subscribeOn(Schedulers.io())
                                     .observeOn(AndroidSchedulers.mainThread())
-                                    .startWith(Result.DataFilesAddResult.activity());
+                                    .startWithItem(Result.DataFilesAddResult.activity());
                         } else {
                             return Observable.just(Result.DataFilesAddResult.clear());
                         }
@@ -250,7 +259,7 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                                 if (intent.containerFile() != null) {
                                     boolean isFileDeleted = intent.containerFile().delete();
                                     if (isFileDeleted) {
-                                        Timber.d("File %s deleted", intent.containerFile().getName());
+                                        Timber.log(Log.DEBUG, "File %s deleted", intent.containerFile().getName());
                                     }
                                 }
                                 navigator.execute(Transaction.pop());
@@ -284,25 +293,32 @@ final class Processor implements ObservableTransformer<Intent, Result> {
         });
 
         dataFileView = upstream -> upstream.switchMap(intent -> {
-            return Observable
-                    .fromCallable(() -> {
-                        File file = intent.dataFile();
-                        if (CryptoContainer.isContainerFileName(file.getName())) {
-                            return Transaction.push(CryptoCreateScreen.open(file));
-                        } else if (SignedContainer.isContainer(file)) {
-                            return Transaction.push(
-                                    SignatureUpdateScreen.create(true, true, file, false, false));
-                        } else {
-                            return Transaction.activity(
-                                    createViewIntent(application, file, mimeType(file)), null);
-                        }
-                    })
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .flatMap(transaction -> {
-                        navigator.execute(transaction);
-                        return Observable.empty();
-                    });
+            if (intent.dataFile() == null) {
+                return Observable.just(Result.OpenDataFileResult.clear());
+            } else if (intent.confirmation()) {
+                return Observable
+                        .just(Result.OpenDataFileResult.confirmation(intent.dataFile()));
+            } else {
+                return Observable
+                        .fromCallable(() -> {
+                            File file = intent.dataFile();
+                            if (CryptoContainer.isContainerFileName(file.getName())) {
+                                return Transaction.push(CryptoCreateScreen.open(file));
+                            } else if (SignedContainer.isContainer(file)) {
+                                return Transaction.push(
+                                        SignatureUpdateScreen.create(true, true, file, false, false));
+                            } else {
+                                return Transaction.activity(
+                                        createViewIntent(application, file, mimeType(file)), null);
+                            }
+                        })
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .flatMap(transaction -> {
+                            navigator.execute(transaction);
+                            return Observable.just(Result.OpenDataFileResult.success());
+                        });
+            }
         });
 
         recipientsAddButtonClick = upstream -> upstream.switchMap(intent -> {
@@ -340,7 +356,7 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                         .onErrorReturn(Result.RecipientsSearchResult::failure)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .startWith(Result.RecipientsSearchResult.activity());
+                        .startWithItem(Result.RecipientsSearchResult.activity());
             }
         });
 
@@ -375,7 +391,7 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                             } catch (Exception e) {
                                 boolean isFileDeleted = containerFile.delete();
                                 if (isFileDeleted) {
-                                    Timber.d("File %s deleted", containerFile.getName());
+                                    Timber.log(Log.DEBUG, "File %s deleted", containerFile.getName());
                                 }
                                 throw e;
                             }
@@ -384,11 +400,11 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                                 Observable
                                         .timer(3, TimeUnit.SECONDS)
                                         .map(ignored -> Result.EncryptResult.success(file))
-                                        .startWith(Result.EncryptResult.successMessage(file)))
+                                        .startWithItem(Result.EncryptResult.successMessage(file)))
                         .onErrorReturn(Result.EncryptResult::failure)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .startWith(Result.EncryptResult.activity());
+                        .startWithItem(Result.EncryptResult.activity());
             } else {
                 return Observable.just(Result.EncryptResult.clear());
             }
@@ -398,7 +414,7 @@ final class Processor implements ObservableTransformer<Intent, Result> {
             if (intent.visible()) {
                 return idCardService.data()
                         .map(Result.DecryptionResult::show)
-                        .startWith(Result.DecryptionResult.show(IdCardDataResponse.initial()));
+                        .startWithItem(Result.DecryptionResult.show(IdCardDataResponse.initial()));
             } else {
                 return Observable.just(Result.DecryptionResult.hide());
             }
@@ -418,7 +434,7 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                                 Observable
                                         .timer(3, TimeUnit.SECONDS)
                                         .map(ignored -> Result.DecryptResult.success(dataFiles))
-                                        .startWith(Result.DecryptResult.successMessage(dataFiles)))
+                                        .startWithItem(Result.DecryptResult.successMessage(dataFiles)))
                         .onErrorReturn(throwable -> {
                             IdCardDataResponse idCardDataResponse = null;
                             if (throwable instanceof Pin1InvalidException) {
@@ -431,7 +447,7 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                         })
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .startWith(Result.DecryptResult.activity());
+                        .startWithItem(Result.DecryptResult.activity());
             } else {
                 return Observable.just(Result.DecryptResult.clear(), Result.DecryptResult.idle());
             }
@@ -491,7 +507,7 @@ final class Processor implements ObservableTransformer<Intent, Result> {
                 })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .startWith(Result.InitialResult.activity());
+                .startWithItem(Result.InitialResult.activity());
     }
 
     private String assignName(String oldName, String newName) {

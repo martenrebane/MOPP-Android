@@ -7,10 +7,13 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.FileProvider;
-import androidx.appcompat.widget.Toolbar;
+
+import android.util.Log;
 import android.webkit.MimeTypeMap;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toolbar;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -22,9 +25,10 @@ import ee.ria.DigiDoc.android.Constants;
 import ee.ria.DigiDoc.android.utils.ViewDisposables;
 import ee.ria.DigiDoc.android.utils.navigator.Navigator;
 import ee.ria.DigiDoc.android.utils.navigator.Transaction;
+import ee.ria.DigiDoc.common.ActivityUtil;
 import timber.log.Timber;
 
-import static com.jakewharton.rxbinding2.support.v7.widget.RxToolbar.navigationClicks;
+import static com.jakewharton.rxbinding4.widget.RxToolbar.navigationClicks;
 
 public final class SharingScreenView extends CoordinatorLayout {
 
@@ -42,6 +46,9 @@ public final class SharingScreenView extends CoordinatorLayout {
 
         disposables = new ViewDisposables();
 
+        toolbarView.setTitle(R.string.sharing_screen_title);
+        toolbarView.setNavigationIcon(R.drawable.ic_clear);
+        toolbarView.setNavigationContentDescription(R.string.close);
 
         showFiles(getContainerFiles(new File(getContext().getFilesDir(), Constants.DIR_SIGNATURE_CONTAINERS)));
     }
@@ -50,8 +57,13 @@ public final class SharingScreenView extends CoordinatorLayout {
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
         disposables.attach();
-        disposables.add(navigationClicks(toolbarView).subscribe(o ->
-                navigator.execute(Transaction.pop())));
+        disposables.add(navigationClicks(toolbarView).subscribe(o -> {
+            if (ActivityUtil.isExternalFileOpened(navigator.activity())) {
+                ActivityUtil.restartActivity(getContext(), navigator.activity());
+            } else {
+                navigator.execute(Transaction.pop());
+            }
+        }));
     }
 
     @Override
@@ -121,9 +133,11 @@ public final class SharingScreenView extends CoordinatorLayout {
                     returnIntent.setDataAndType(null, "");
                     activity.setResult(Activity.RESULT_CANCELED, returnIntent);
                     activity.finish();
+                    restartToMainApp();
                 }
             } catch (IllegalArgumentException e) {
-                Timber.e(e, "File selecting failed");
+                Timber.log(Log.ERROR, e, "File selecting failed");
+                restartToMainApp();
             }
         });
     }
@@ -132,7 +146,8 @@ public final class SharingScreenView extends CoordinatorLayout {
         if (isIntentWithExtraReferrer(activity)) {
           restartAppWithIntent(intent);
         } else {
-            activity.finish();
+            Timber.log(Log.ERROR, "File selecting failed");
+            restartToMainApp();
         }
     }
 
@@ -159,5 +174,11 @@ public final class SharingScreenView extends CoordinatorLayout {
         restartIntent.setAction(intent.getAction());
         restartIntent.setDataAndType(intent.getData(), intent.getType());
         getContext().startActivity(restartIntent);
+    }
+
+    private void restartToMainApp() {
+        Toast.makeText(getContext(), R.string.signature_update_container_load_error, Toast.LENGTH_LONG).show();
+        Intent mainIntent = new Intent(Intent.ACTION_MAIN);
+        restartAppWithIntent(mainIntent);
     }
 }

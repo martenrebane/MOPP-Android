@@ -1,6 +1,6 @@
 /*
  * app
- * Copyright 2017 - 2021 Riigi Infosüsteemi Amet
+ * Copyright 2017 - 2022 Riigi Infosüsteemi Amet
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,6 +27,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.util.Log;
+
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -39,12 +41,16 @@ import ee.ria.DigiDoc.android.model.smartid.SmartIdMessageException;
 import ee.ria.DigiDoc.android.utils.navigator.Navigator;
 import ee.ria.DigiDoc.configuration.ConfigurationProvider;
 import ee.ria.DigiDoc.smartid.dto.request.SmartIDSignatureRequest;
+import ee.ria.DigiDoc.smartid.dto.response.ServiceFault;
 import ee.ria.DigiDoc.smartid.dto.response.SessionStatusResponse;
 import ee.ria.DigiDoc.smartid.dto.response.SmartIDServiceResponse;
 import ee.ria.DigiDoc.smartid.service.SmartSignService;
 import ee.ria.DigiDoc.sign.SignedContainer;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
+
+import io.reactivex.rxjava3.core.ObservableEmitter;
+import io.reactivex.rxjava3.core.ObservableOnSubscribe;
+
+import timber.log.Timber;
 
 import static ee.ria.DigiDoc.smartid.service.SmartSignConstants.CERTIFICATE_CERT_BUNDLE;
 import static ee.ria.DigiDoc.smartid.service.SmartSignConstants.CREATE_SIGNATURE_CHALLENGE;
@@ -83,10 +89,11 @@ public final class SmartIdOnSubscribe implements ObservableOnSubscribe<SmartIdRe
                 switch (intent.getStringExtra(SID_BROADCAST_TYPE_KEY)) {
                     case SERVICE_FAULT: {
                         NotificationManagerCompat.from(navigator.activity()).cancelAll();
-                        SessionStatusResponse.ProcessStatus status =
-                                (SessionStatusResponse.ProcessStatus) intent.getSerializableExtra(SERVICE_FAULT);
+                        ServiceFault serviceFault =
+                                ServiceFault.fromJson(intent.getStringExtra(SERVICE_FAULT));
+                        Timber.log(Log.DEBUG, "Got status: %s", serviceFault.getStatus());
                         emitter.onError(SmartIdMessageException
-                                .create(navigator.activity(), status));
+                                .create(navigator.activity(), serviceFault.getStatus(), serviceFault.getDetailMessage()));
                         break;
                     }
                     case CREATE_SIGNATURE_DEVICE:

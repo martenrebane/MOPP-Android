@@ -52,6 +52,7 @@
     <string name="main_diagnostics_configuration_update_date">ДАТА ОБНОВЛЕНИЯ:\u0020</string>
     <string name="main_diagnostics_configuration_last_check_date">ПОСЛЕДНЯЯ ПРОВЕРКА:\u0020</string>
     <string name="main_diagnostics_configuration_check_for_update_button">ПРОВЕРЬТЕ ОБНОВЛЕНИЯ</string>
+    <string name="main_diagnostics_configuration_save_diagnostics_button">СОХРАНИТЬ ДИАГНОСТИКУ</string>
     <string name="main_diagnostics_rpuuid_default">назначено по умолчанию</string>
     <string name="main_diagnostics_rpuuid_custom">назначено вручную</string>
 
@@ -67,6 +68,9 @@
 
     <!-- Signature Create -->
     <string name="signature_create_error">Не удалось загрузить выбранные файлы</string>
+    <string name="siva_send_message_dialog">Для проверки действительности электронно-цифровых подписей в форматах PDF и DDOC файл пересылается в службу проверки цифровых подписей SiVa. Подробнее о данных, переданных для проверки действительности электронно-цифровых подписей, можно прочитать https://www.id.ee/ru/artikkel/usloviya-zashhity-dannyh-programmnogo-obespecheniya-id-karty-departamenta-gosudarstvennoj-infosistemy/</string>
+    <string name="siva_read_here">здесь</string>
+    <string name="siva_continue_question">Вы желаете продолжить?</string>
 
     <!-- Signature Update -->
     <string name="signature_update_title_created">Подписание</string>
@@ -125,8 +129,10 @@
     <string name="signature_update_signature_add_positive_button">ПОДПИСАТЬ</string>
     <string name="signature_update_signature_add_success">ПОДПИСЬ ДОБАВЛЕНА</string>
     <string name="signature_update_signature_add_error">Что-то пошло не так</string>
+    <string name="signature_update_signature_add_error_title">Не удалось подписать контейнер</string>
 
     <string name="signature_update_signature_error_message_additional_information">Дополнительная информация</string>
+    <string name="signature_update_signature_error_message_details">Детали</string>
 
     <string name="signature_update_signature_error_message_too_many_requests">Предел для цифровых подписей в месяц был достигнут для этого IP-адреса. https://www.id.ee/ru/artikkel/dlya-uchrezhdenij-v-kotoryh-v-bolshom-obeme-podpisyvayutsya-dokumenty-s-pomoshhyu-digidoc4-klienta/</string>
     <string name="signature_update_signature_error_message_exceeded_unsuccessful_requests">Не удалось отправить запрос. Превышено количество неудачных запросов с этого IP-адреса. Пожалуйста, попробуйте позже.</string>
@@ -135,9 +141,9 @@
 
     <string name="signature_update_signature_error_invalid_ssl_handshake">Не удалось создать SSL канал передачи данных. Проверьте настройки вашего приложения или обновления программного обеспечения.</string>
 
-    <string name="signature_update_signature_selected_method_mobile_id">Выбранный метод подписи – Mobiil-ID, вкладка %1$d из %2$d</string>
-    <string name="signature_update_signature_selected_method_smart_id">Выбранный метод подписи – Smart-ID, вкладка %1$d из %2$d</string>
-    <string name="signature_update_signature_selected_method_id_card">Выбранный метод подписи – ID-карта, вкладка %1$d из %2$d</string>
+    <string name="signature_update_signature_selected_method_mobile_id">Метод подписи – Mobiil-ID, вкладка %1$d из %2$d</string>
+    <string name="signature_update_signature_selected_method_smart_id">Метод подписи – Smart-ID, вкладка %1$d из %2$d</string>
+    <string name="signature_update_signature_selected_method_id_card">Метод подписи – ID-карта, вкладка %1$d из %2$d</string>
 
     <string name="signature_update_signature_chosen_method_mobile_id">Выбран метод подписи Mobiil-ID</string>
     <string name="signature_update_signature_chosen_method_smart_id">Выбран метод подписи Smart-ID</string>
@@ -149,8 +155,7 @@
     <string name="signature_update_mobile_id_remember_me">Запомни меня</string>
     <string name="signature_update_mobile_id_info">Убедитесь в правильности контрольного кодa и введите PIN2-код для mobiil-ID</string>
 
-    <!-- Currently must be in English -->
-    <string name="signature_update_mobile_id_display_message">Sign document</string>
+    <string name="signature_update_mobile_id_display_message">Подписать документ</string>
 
     <string name="signature_update_mobile_id_status_request_sent">Запрос на подпись отправлен</string>
     <string name="signature_update_mobile_id_status_request_ok">Запрос принят</string>
@@ -187,6 +192,7 @@
     <string name="signature_update_mobile_id_error_message_exceeds_volume_limit">Слишком много файлов в контейнере</string>
     <string name="signature_update_mobile_id_error_message_access_rights">Не удалось подписать контейнер. Проверьте настройки доступа услуги mobiil-ID. https://www.id.ee/ru/artikkel/dlya-uchrezhdenij-v-kotoryh-v-bolshom-obeme-podpisyvayutsya-dokumenty-s-pomoshhyu-digidoc4-klienta/</string>
     <string name="signature_update_mobile_id_error_simultaneous_requests_limit_exceeded">Превышен лимит одновременных запросов</string>
+    <string name="signature_update_mobile_id_error_technical_error">Не удалось отправить запрос. Технический сбой услуги mobiil-ID. Пожалуйста, попробуйте позже.</string>
 
     <string name="signature_update_smart_id_message">Введите свой личный код для подписи с Smart-ID</string>
     <string name="signature_update_smart_id_country">Страна</string>
@@ -200,6 +206,7 @@
     <string name="signature_update_smart_id_error_message_account_not_found_or_timeout">Не удалось подписать контейнер. Срок действия вашей операции Smart-ID истек или учетная запись не найдена</string>
     <string name="signature_update_smart_id_error_message_session_not_found">Сессия не найден</string>
     <string name="signature_update_smart_id_error_message_access_rights">Не удалось подписать контейнер. Проверьте настройки доступа услуги Smart-ID. https://www.id.ee/ru/artikkel/dlya-uchrezhdenij-v-kotoryh-v-bolshom-obeme-podpisyvayutsya-dokumenty-s-pomoshhyu-digidoc4-klienta/</string>
+    <string name="signature_update_smart_id_error_technical_error">Не удалось отправить запрос. Технический сбой услуги Smart-ID. Пожалуйста, попробуйте позже.</string>
 
     <string name="signature_update_id_card_progress_message_initial">Подключите считыватель карты и вставьте в него Вашу ID-карту</string>
     <string name="signature_update_id_card_progress_message_reader_detected">Обнаружен считыватель карты. Вставьте в него Вашу ID-карту.</string>
@@ -402,6 +409,9 @@
     <string name="decrypt_content_description">Дешифровать, вкладка %1$d из %2$d</string>
     <string name="decrypt_send_content_description">Поделиться, вкладка %1$d из %2$d</string>
 
+    <string name="yes_button">ДА</string>
+    <string name="cancel_button">ОТМЕНИТЬ</string>
+
     <!-- Sharing Screen -->
     <string name="sharing_screen_title">Выбрать файл</string>
 
@@ -417,6 +427,7 @@
     <string name="file_removed">Файл удален</string>
     <string name="file_removal_cancelled">Удаление файла отменено</string>
     <string name="file_saved">Файл сохранен</string>
+    <string name="file_saved_error">Не удалось сохранить файл</string>
     <string name="document_removed">Документ удален</string>
     <string name="document_removal_cancelled">Удаление документа отменено</string>
     <string name="file_added">Файл добавлен</string>

@@ -1,5 +1,9 @@
 package ee.ria.DigiDoc.configuration.util;
 
+import android.util.Log;
+
+import org.apache.commons.io.FilenameUtils;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -13,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import ee.ria.DigiDoc.common.FileUtil;
 import ee.ria.DigiDoc.configuration.BuildConfig;
 import timber.log.Timber;
 
@@ -104,7 +109,7 @@ public class FileUtils {
     }
 
     public static void removeFile(String filePath) {
-        File fileToDelete = new File(filePath);
+        File fileToDelete = new File(FilenameUtils.normalize(filePath));
         if (fileToDelete.exists()) {
             boolean isFileDeleted = fileToDelete.delete();
             if (isFileDeleted) {
@@ -122,7 +127,7 @@ public class FileUtils {
                 writer.write(fileLine + System.getProperty("line.separator"));
             }
         } catch (IOException e) {
-            Timber.e(e, "Failed to open file: %s", fileName);
+            Timber.log(Log.ERROR, e, "Failed to open file: %s", fileName);
         }
     }
 

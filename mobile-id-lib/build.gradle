@@ -11,20 +11,28 @@ android {
     lintOptions {
         lintConfig file('../lint.xml')
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
 }
 
 dependencies {
     implementation "androidx.annotation:annotation:${androidxVersion}"
-    implementation "androidx.appcompat:appcompat:${androidxVersion}"
+    implementation "androidx.appcompat:appcompat:${androidxAppCompatVersion}"
+    implementation  "androidx.localbroadcastmanager:localbroadcastmanager:${androidxLocalBroadcastManagerVersion}"
 
     implementation "com.jakewharton.timber:timber:${timberVersion}"
 
     implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
 
+    implementation "com.unboundid:unboundid-ldapsdk:${ldapSdkVersion}"
+
     implementation project(':common-lib')
 
     implementation "com.squareup.okhttp3:logging-interceptor:${okhttpVersion}"
     implementation "com.squareup.retrofit2:retrofit:${retrofitVersion}"
+    implementation "com.squareup.retrofit2:converter-scalars:${retrofitVersion}"
     implementation "com.squareup.retrofit2:converter-gson:${retrofitVersion}"
     implementation ("com.squareup.retrofit2:converter-simplexml:${retrofitVersion}") {
         exclude group: 'xpp3', module: 'xpp3'

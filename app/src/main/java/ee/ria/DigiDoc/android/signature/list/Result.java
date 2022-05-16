@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.io.File;
 
+import ee.ria.DigiDoc.android.utils.files.FileSystem;
 import ee.ria.DigiDoc.android.utils.mvi.MviResult;
 
 interface Result extends MviResult<ViewState> {
@@ -38,7 +39,7 @@ interface Result extends MviResult<ViewState> {
         }
 
         static ContainersLoadResult success(ImmutableList<File> containerFiles) {
-            return create(true, false, containerFiles, null);
+            return create(true, false, FileSystem.filterContainers(containerFiles), null);
         }
 
         static ContainersLoadResult failure(Throwable error) {
@@ -56,13 +57,29 @@ interface Result extends MviResult<ViewState> {
     @AutoValue
     abstract class VoidResult implements Result {
 
+        @Nullable abstract File confirmationContainerFile();
+
         @Override
         public ViewState reduce(ViewState state) {
-            return state;
+            ViewState.Builder builder = state.buildWith()
+                    .sivaConfirmationContainerFile(confirmationContainerFile());
+            return builder.build();
         }
 
-        static VoidResult create() {
-            return new AutoValue_Result_VoidResult();
+        static VoidResult confirmation(File confirmationContainerFile) {
+            return create(confirmationContainerFile);
+        }
+
+        static VoidResult success() {
+            return create(null);
+        }
+
+        static VoidResult cancel() {
+            return create(null);
+        }
+
+        static VoidResult create(@Nullable File confirmationContainerFile) {
+            return new AutoValue_Result_VoidResult(confirmationContainerFile);
         }
     }
 
@@ -97,7 +114,7 @@ interface Result extends MviResult<ViewState> {
         }
 
         static ContainerRemoveResult success(ImmutableList<File> containerFiles) {
-            return create(null, false, containerFiles, null);
+            return create(null, false, FileSystem.filterContainers(containerFiles), null);
         }
 
         static ContainerRemoveResult failure(Throwable error) {

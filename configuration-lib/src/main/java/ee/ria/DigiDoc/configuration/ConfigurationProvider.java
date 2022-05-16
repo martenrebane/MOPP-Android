@@ -2,9 +2,9 @@ package ee.ria.DigiDoc.configuration;
 
 import android.os.Parcelable;
 
-import com.google.auto.value.AutoValue;
+import androidx.annotation.Nullable;
 
-import org.jetbrains.annotations.Nullable;
+import com.google.auto.value.AutoValue;
 
 import java.util.Date;
 import java.util.List;
@@ -19,7 +19,6 @@ public abstract class ConfigurationProvider implements Parcelable {
     public abstract String getTslUrl();
     public abstract List<String> getTslCerts();
     public abstract String getTsaUrl();
-
     public abstract String getLdapPersonUrl();
     public abstract String getLdapCorpUrl();
     public abstract String getMidRestUrl();
@@ -46,7 +45,6 @@ public abstract class ConfigurationProvider implements Parcelable {
         abstract ConfigurationProviderBuilder setTslUrl(String tslUrl);
         abstract ConfigurationProviderBuilder setTslCerts(List<String> tslCerts);
         abstract ConfigurationProviderBuilder setTsaUrl(String tsaUrl);
-
         abstract ConfigurationProviderBuilder setLdapPersonUrl(String ldapPersonUrl);
         abstract ConfigurationProviderBuilder setLdapCorpUrl(String ldapCorpUrl);
         abstract ConfigurationProviderBuilder setMidRestUrl(String midRestUrl);

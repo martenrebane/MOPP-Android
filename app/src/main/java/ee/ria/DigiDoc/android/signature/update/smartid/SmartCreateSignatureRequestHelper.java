@@ -1,6 +1,6 @@
 /*
  * app
- * Copyright 2017 - 2021 Riigi Infosüsteemi Amet
+ * Copyright 2017 - 2022 Riigi Infosüsteemi Amet
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -46,7 +46,10 @@ final class SmartCreateSignatureRequestHelper {
 
         request.setContainerPath(container.file().getPath());
         request.setHashType(DIGEST_TYPE);
-        request.setDisplayText(MessageUtil.trimDisplayMessageIfNotWithinSizeLimit(displayMessage, MAX_DISPLAY_MESSAGE_BYTES, StandardCharsets.UTF_8));
+        request.setDisplayText(MessageUtil.escape(
+                MessageUtil.trimDisplayMessageIfNotWithinSizeLimit(
+                        displayMessage, MAX_DISPLAY_MESSAGE_BYTES, StandardCharsets.UTF_8
+                )));
         return request;
     }
 }
