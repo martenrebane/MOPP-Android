@@ -18,6 +18,13 @@ android {
         ndk {
             abiFilters = []
             abiFilters.addAll(appAbiFilters.split(';').collect{it as String})
+            debugSymbolLevel 'FULL'
+        }
+
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++17"
+            }
         }
     }
 
