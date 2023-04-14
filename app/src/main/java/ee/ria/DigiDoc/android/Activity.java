@@ -69,48 +69,80 @@ public final class Activity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        System.out.println("DIGIDOC: onCreate");
+        Timber.log(Log.INFO, "DIGIDOC: onCreate");
         handleRootedDevice();
         setTheme(R.style.Theme_Application);
         setTitle(""); // ACCESSIBILITY: prevents application name read during each activity launch
         super.onCreate(savedInstanceState);
 
+        System.out.println("DIGIDOC: Preventing screen recording");
+        Timber.log(Log.INFO, "DIGIDOC: Preventing screen recording");
+
         // Prevent screen recording
         SecureUtil.markAsSecure(this, getWindow());
 
+        System.out.println("DIGIDOC: Handling previous crashes");
+        Timber.log(Log.INFO, "DIGIDOC: Handling previous crashes");
+
         handleCrashOnPreviousExecution();
+
+        System.out.println("DIGIDOC: Intent: " + getIntent().toString());
+        Timber.log(Log.INFO, "DIGIDOC: Intent: " + getIntent().toString());
 
         Intent intent = sanitizeIntent(getIntent());
 
+        System.out.println("DIGIDOC: Sanitized intent: " + intent.toString());
+        Timber.log(Log.INFO, "DIGIDOC: Sanitized intent: " + intent);
+
         if ((Intent.ACTION_SEND.equals(intent.getAction()) || Intent.ACTION_SEND_MULTIPLE.equals(intent.getAction()) || Intent.ACTION_VIEW.equals(intent.getAction())) && intent.getType() != null) {
+            System.out.println("DIGIDOC: Got ACTION_SEND intent: " + intent);
+            Timber.log(Log.INFO, "DIGIDOC: Got ACTION_SEND intent: " + intent);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             intent.setAction(intent.getAction());
             handleIncomingFiles(intent, this);
         } else if (Intent.ACTION_CONFIGURATION_CHANGED.equals(intent.getAction())) {
+            System.out.println("DIGIDOC: Got ACTION_CONFIGURATION_CHANGED intent: " + intent);
+            Timber.log(Log.INFO, "DIGIDOC: Got ACTION_CONFIGURATION_CHANGED intent: " + intent);
             getIntent().setAction(Intent.ACTION_MAIN);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             restartAppWithIntent(intent, false);
         } else if (Intent.ACTION_GET_CONTENT.equals(intent.getAction())) {
+            System.out.println("DIGIDOC: Got ACTION_GET_CONTENT intent: " + intent);
+            Timber.log(Log.INFO, "DIGIDOC: Got ACTION_GET_CONTENT intent: " + intent);
             rootScreenFactory.intent(intent, this);
         } else if (Intent.ACTION_MAIN.equals(intent.getAction()) && savedInstanceState != null) {
+            System.out.println("DIGIDOC: Got ACTION_MAIN intent with savedInstanceState: " + intent);
+            Timber.log(Log.INFO, "DIGIDOC: Got ACTION_MAIN intent with savedInstanceState: " + intent);
             savedInstanceState = null;
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             restartAppWithIntent(intent, false);
         } else {
+            System.out.println("DIGIDOC: Creating rootScreenFactory: " + intent);
+            Timber.log(Log.INFO, "DIGIDOC: Creating rootScreenFactory: " + intent);
             rootScreenFactory.intent(intent, this);
         }
 
         mContext = new WeakReference<>(this);
 
+        System.out.println("DIGIDOC: initializeApplicationFileTypesAssociation");
+        Timber.log(Log.INFO, "DIGIDOC: initializeApplicationFileTypesAssociation");
+
         initializeApplicationFileTypesAssociation();
+
+        System.out.println("DIGIDOC: navigator.onCreate");
+        Timber.log(Log.INFO, "DIGIDOC: navigator.onCreate");
 
         navigator.onCreate(this, findViewById(android.R.id.content), savedInstanceState);
     }
 
     private void handleRootedDevice() {
         if (CommonUtils.isRooted()) {
+            System.out.println("DIGIDOC: ROOTED DEVICE");
+            Timber.log(Log.INFO, "DIGIDOC: ROOTED DEVICE");
             ErrorDialog errorDialog = new ErrorDialog(this);
             errorDialog.setMessage(getResources().getString(R.string.rooted_device));
             errorDialog.setButton(DialogInterface.BUTTON_POSITIVE, getResources().getString(android.R.string.ok), (dialog, which) -> dialog.cancel());
@@ -120,6 +152,8 @@ public final class Activity extends AppCompatActivity {
 
     private void handleCrashOnPreviousExecution() {
         if (FirebaseCrashlytics.getInstance().didCrashOnPreviousExecution()) {
+            System.out.println("DIGIDOC: didCrashOnPreviousExecution: yes");
+            Timber.log(Log.INFO, "DIGIDOC: didCrashOnPreviousExecution: yes");
             if (settingsDataStore.getAlwaysSendCrashReport()) {
                 sendUnsentCrashReports();
                 return;
@@ -149,6 +183,8 @@ public final class Activity extends AppCompatActivity {
     }
 
     private void sendUnsentCrashReports() {
+        System.out.println("DIGIDOC: sendUnsentCrashReports");
+        Timber.log(Log.INFO, "DIGIDOC: sendUnsentCrashReports");
         Task<Boolean> task = FirebaseCrashlytics.getInstance().checkForUnsentReports();
         task.addOnSuccessListener(hasUnsentReports -> {
             if (hasUnsentReports) {
@@ -165,6 +201,8 @@ public final class Activity extends AppCompatActivity {
     }
 
     public void restartAppWithIntent(Intent intent, boolean withExit) {
+        System.out.println("DIGIDOC: restartAppWithIntent: " + intent);
+        Timber.log(Log.INFO, "DIGIDOC: restartAppWithIntent: " + intent);
         finish();
         startActivity(intent);
         overridePendingTransition (0, 0);
@@ -175,10 +213,14 @@ public final class Activity extends AppCompatActivity {
     }
 
     private void handleIncomingFiles(Intent intent, Activity activity) {
+        System.out.println("DIGIDOC: Handling incoming files");
+        Timber.log(Log.INFO, "DIGIDOC: Handling incoming files");
         try {
             intent.setDataAndType(FileUtil.normalizeUri(intent.getData()), "*/*");
             rootScreenFactory.intent(intent, activity);
         } catch (ActivityNotFoundException e) {
+            System.out.println("DIGIDOC: Handling incoming file intent. Error: " + e.getMessage());
+            Timber.log(Log.INFO, "DIGIDOC: Handling incoming file intent. Error: " + e.getMessage());
             Timber.log(Log.ERROR, e, "Handling incoming file intent");
         }
     }
@@ -254,16 +296,24 @@ public final class Activity extends AppCompatActivity {
 
         @Override
         public Screen call() {
+            System.out.println("DIGIDOC: RootScreenFactory call");
+            Timber.log(Log.INFO, "DIGIDOC: RootScreenFactory call");
             if ((intent != null && intent.getAction() != null &&
                     (Intent.ACTION_SEND.equals(intent.getAction()) ||
                             Intent.ACTION_SEND_MULTIPLE.equals(intent.getAction()) ||
                             Intent.ACTION_VIEW.equals(intent.getAction()))) &&
                     intent.getType() != null) {
+                System.out.println("DIGIDOC: Choosing screen");
+                Timber.log(Log.INFO, "DIGIDOC: Choosing screen");
                 return chooseScreen(intent, activity);
             } else if (intent != null && intent.getAction() != null &&
                     Intent.ACTION_GET_CONTENT.equals(intent.getAction())) {
+                System.out.println("DIGIDOC: Creating SharingScreen");
+                Timber.log(Log.INFO, "DIGIDOC: Creating SharingScreen");
                 return SharingScreen.create();
             }
+            System.out.println("DIGIDOC: Creating HomeScreen");
+            Timber.log(Log.INFO, "DIGIDOC: Creating HomeScreen");
             return HomeScreen.create(intent);
         }
 
@@ -274,8 +324,12 @@ public final class Activity extends AppCompatActivity {
                 fileStreams = IntentUtils.parseGetContentIntent(getContext().get(),
                         activity.getContentResolver(), intent, externallyOpenedFilesDir);
             } catch (Exception e) {
+                System.out.println("DIGIDOC: Unable to open file. Error: " + e.getMessage());
+                Timber.log(Log.INFO, "DIGIDOC: Unable to open file. Error: " + e.getMessage());
                 Timber.log(Log.ERROR, e, "Unable to open file");
                 ToastUtil.showError(getContext().get(), R.string.signature_create_error);
+                System.out.println("DIGIDOC: Choosing screen HomeScreen");
+                Timber.log(Log.INFO, "DIGIDOC: Choosing screen HomeScreen");
                 return HomeScreen.create(
                         new Intent(Intent.ACTION_MAIN)
                                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -287,6 +341,8 @@ public final class Activity extends AppCompatActivity {
                 if (extensionPart != -1) {
                     String extension = fileName.substring(fileName.lastIndexOf("."));
                     if (".cdoc".equalsIgnoreCase(extension)) {
+                        System.out.println("DIGIDOC: Choosing screen CryptoCreateScreen");
+                        Timber.log(Log.INFO, "DIGIDOC: Choosing screen CryptoCreateScreen");
                         return CryptoCreateScreen.open(intent);
                     }
                 } else if (intent.getClipData() != null || intent.getData() != null) {
@@ -302,6 +358,8 @@ public final class Activity extends AppCompatActivity {
                                     newFileName + ".cdoc");
                             CryptoContainer.open(renamedFile.toFile());
                             Intent updatedIntent = setIntentData(intent, renamedFile, activity);
+                            System.out.println("DIGIDOC: Choosing updatedIntent screen CryptoCreateScreen");
+                            Timber.log(Log.INFO, "DIGIDOC: Choosing updatedIntent screen CryptoCreateScreen");
                             return CryptoCreateScreen.open(updatedIntent);
                         } else {
                             String externalFileName = getFileName(file);
@@ -310,17 +368,25 @@ public final class Activity extends AppCompatActivity {
                                         newFileName);
                                 SignedContainer.open(renamedFile.toFile());
                                 Intent updatedIntent = setIntentData(intent, renamedFile, activity);
+                                System.out.println("DIGIDOC: Choosing updatedIntent screen SignatureCreateScreen");
+                                Timber.log(Log.INFO, "DIGIDOC: Choosing updatedIntent screen SignatureCreateScreen");
                                 return SignatureCreateScreen.create(updatedIntent);
                             } else {
+                                System.out.println("DIGIDOC: Choosing creation screen SignatureCreateScreen");
+                                Timber.log(Log.INFO, "DIGIDOC: Choosing creation screen SignatureCreateScreen");
                                 return SignatureCreateScreen.create(intent);
                             }
                         }
                     } catch (Exception e) {
+                        System.out.println("DIGIDOC: Unable to open container. Opening as file. Error: " + e.getMessage());
+                        Timber.log(Log.INFO, "DIGIDOC: Unable to open container. Opening as file. Error: " + e.getMessage());
                         Timber.log(Log.ERROR, e, "Unable to open container. Opening as file");
                         return SignatureCreateScreen.create(intent);
                     }
                 }
             }
+            System.out.println("DIGIDOC: Creating screen SignatureCreateScreen");
+            Timber.log(Log.INFO, "DIGIDOC: Creating screen SignatureCreateScreen");
             return SignatureCreateScreen.create(intent);
         }
 
@@ -334,12 +400,16 @@ public final class Activity extends AppCompatActivity {
                 if (!extension.isEmpty()) {
                     return "container." + extension;
                 } else {
+                    System.out.println("DIGIDOC: File.getName(): " + file.getName());
+                    Timber.log(Log.INFO, "DIGIDOC: File.getName(): " + file.getName());
                     return file.getName();
                 }
             }
         }
 
         private static Intent setIntentData(Intent intent, Path filePath, android.app.Activity activity) {
+            System.out.println("DIGIDOC: Setting intentData");
+            Timber.log(Log.INFO, "DIGIDOC: Setting intentData");
             intent.setData(Uri.parse(filePath.toUri().toString()));
             intent.setClipData(ClipData.newRawUri(filePath.getFileName().toString(), FileProvider.getUriForFile(
                     activity,

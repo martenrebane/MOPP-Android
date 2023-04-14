@@ -106,7 +106,7 @@ public class Application extends android.app.Application {
     public void onCreate() {
         setupAppLogging();
         setupTSLFiles();
-        setupStrictMode();
+//        setupStrictMode();
         super.onCreate();
         setupBouncyCastle();
         setupTimber();
@@ -261,29 +261,10 @@ public class Application extends android.app.Application {
     private void setupAppLogging() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
-        if (!sharedPreferences.contains(getString(R.string.main_diagnostics_logging_key))) {
-            sharedPreferences.edit().putBoolean(getString(R.string.main_diagnostics_logging_key), false)
-                    .commit();
-        }
+        sharedPreferences.edit().putBoolean(getString(R.string.main_diagnostics_logging_key), true)
+                .commit();
 
-        if (!sharedPreferences.contains(getString(R.string.main_diagnostics_logging_running_key))) {
-            sharedPreferences.edit().putBoolean(getString(R.string.main_diagnostics_logging_running_key), false)
-                    .commit();
-        }
-
-        boolean isDiagnosticsLoggingEnabled = sharedPreferences.getBoolean(getString(R.string.main_diagnostics_logging_key), false);
-        boolean isDiagnosticsLoggingRunning = sharedPreferences.getBoolean(getString(R.string.main_diagnostics_logging_running_key), false);
-
-        if (isDiagnosticsLoggingEnabled && isDiagnosticsLoggingRunning) {
-            isDiagnosticsLoggingEnabled = false;
-            isDiagnosticsLoggingRunning = false;
-        } else if (isDiagnosticsLoggingEnabled) {
-            isDiagnosticsLoggingRunning = true;
-        }
-
-        sharedPreferences.edit()
-                .putBoolean(getString(R.string.main_diagnostics_logging_key), isDiagnosticsLoggingEnabled)
-                .putBoolean(getString(R.string.main_diagnostics_logging_running_key), isDiagnosticsLoggingRunning)
+        sharedPreferences.edit().putBoolean(getString(R.string.main_diagnostics_logging_running_key), true)
                 .commit();
     }
 

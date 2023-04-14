@@ -29,7 +29,7 @@ public class FileLoggingTree extends Timber.DebugTree {
     private static Logger mLogger = LoggerFactory.getLogger(FileLoggingTree.class);
 
     public FileLoggingTree(Context context) {
-        final String logDirectory = context.getFilesDir() + "/logs";
+        final String logDirectory = context.getExternalFilesDirs(null)[0] + "/logs";
         configureLogger(logDirectory);
     }
 

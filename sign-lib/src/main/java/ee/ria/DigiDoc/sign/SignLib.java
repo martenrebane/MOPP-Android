@@ -102,7 +102,7 @@ public final class SignLib {
     }
 
     private static void initLibDigiDocLogging(Context context) {
-        final File logDirectory = new File(context.getFilesDir() + "/logs");
+        final File logDirectory = new File(context.getExternalFilesDir(null) + "/logs");
         if (!logDirectory.exists()) {
             boolean isDirCreated = logDirectory.mkdir();
             if (isDirCreated) {

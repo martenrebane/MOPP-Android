@@ -178,7 +178,7 @@ public class FileUtil {
     }
 
     public static File getLogsDirectory(Context context) {
-        return new File(context.getFilesDir() + "/logs");
+        return new File(context.getExternalFilesDir(null) + "/logs");
     }
 
     private static boolean isRawUrl(String url) {
