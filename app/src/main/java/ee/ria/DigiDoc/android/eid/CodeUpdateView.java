@@ -6,6 +6,7 @@ import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.Button;
@@ -32,6 +33,7 @@ import ee.ria.DigiDoc.android.eid.CodeUpdateError.CodeSameAsCurrentError;
 import ee.ria.DigiDoc.android.eid.CodeUpdateError.CodeTooEasyError;
 import ee.ria.DigiDoc.android.utils.mvi.State;
 import io.reactivex.rxjava3.core.Observable;
+import timber.log.Timber;
 
 import static com.jakewharton.rxbinding4.widget.RxToolbar.navigationClicks;
 import static com.jakewharton.rxbinding4.view.RxView.clicks;
@@ -88,6 +90,9 @@ public final class CodeUpdateView extends CoordinatorLayout {
         activityOverlayView = findViewById(R.id.activityOverlay);
         activityIndicatorView = findViewById(R.id.activityIndicator);
         scrollView = findViewById(R.id.eidHomeCodeUpdateScroll);
+
+        Timber.log(Log.DEBUG, "DIGIDOC: CodeUpdateView constructor");
+        System.out.println("DIGIDOC: CodeUpdateView constructor");
     }
 
     public void render(@State String state, CodeUpdateAction action,
@@ -117,8 +122,15 @@ public final class CodeUpdateView extends CoordinatorLayout {
         activityOverlayView.setVisibility(state.equals(State.ACTIVE) ? VISIBLE : GONE);
         activityIndicatorView.setVisibility(state.equals(State.ACTIVE) ? VISIBLE : GONE);
 
+        Timber.log(Log.DEBUG, "DIGIDOC: Checking PIN length for 'currentView'");
+        System.out.println("DIGIDOC: Checking PIN length for 'currentView'");
         checkPinLength(currentView);
+
+        Timber.log(Log.DEBUG, "DIGIDOC: Checking PIN length for 'newTextView'");
+        System.out.println("DIGIDOC: Checking PIN length for 'newTextView'");
         checkPinLength(newTextView);
+        Timber.log(Log.DEBUG, "DIGIDOC: Checking PIN length for 'repeatView'");
+        System.out.println("DIGIDOC: Checking PIN length for 'repeatView'");
         checkPinLength(repeatView);
 
         int changeButtonDescriptionResId;
@@ -130,10 +142,14 @@ public final class CodeUpdateView extends CoordinatorLayout {
                     changeButtonDescriptionResId = R.string.confirm_pin1_unblock;
                     cancelButtonDescriptionResId = R.string.cancel_pin1_unblock;
                     overlayPaneTitleResId = R.string.eid_home_code_update_title_pin1_unblock;
+                    Timber.log(Log.DEBUG, "DIGIDOC: Action type: PIN1, UNBLOCK");
+                    System.out.println("DIGIDOC: Action type: PIN1, UNBLOCK");
                 } else {
                     changeButtonDescriptionResId = R.string.confirm_pin1_change;
                     cancelButtonDescriptionResId = R.string.cancel_pin1_change;
                     overlayPaneTitleResId = R.string.eid_home_code_update_title_pin1_edit;
+                    Timber.log(Log.DEBUG, "DIGIDOC: Action type: PIN1, CHANGE");
+                    System.out.println("DIGIDOC: Action type: PIN1, CHANGE");
                 }
                 break;
             case PIN2:
@@ -141,18 +157,26 @@ public final class CodeUpdateView extends CoordinatorLayout {
                     changeButtonDescriptionResId = R.string.confirm_pin2_unblock;
                     cancelButtonDescriptionResId = R.string.cancel_pin2_unblock;
                     overlayPaneTitleResId = R.string.eid_home_code_update_title_pin2_unblock;
+                    Timber.log(Log.DEBUG, "DIGIDOC: Action type: PIN2, UNBLOCK");
+                    System.out.println("DIGIDOC: Action type: PIN2, UNBLOCK");
                 } else {
                     changeButtonDescriptionResId = R.string.confirm_pin2_change;
                     cancelButtonDescriptionResId = R.string.cancel_pin2_change;
                     overlayPaneTitleResId = R.string.eid_home_code_update_title_pin2_edit;
+                    Timber.log(Log.DEBUG, "DIGIDOC: Action type: PIN1, CHANGE");
+                    System.out.println("DIGIDOC: Action type: PIN1, CHANGE");
                 }
                 break;
             case PUK:
                 changeButtonDescriptionResId = R.string.confirm_puk_change;
                 cancelButtonDescriptionResId = R.string.cancel_puk_change;
                 overlayPaneTitleResId = R.string.eid_home_code_update_title_puk_edit;
+                Timber.log(Log.DEBUG, "DIGIDOC: Action type: PUK, CHANGE");
+                System.out.println("DIGIDOC: Action type: PUK, CHANGE");
                 break;
             default:
+                Timber.log(Log.DEBUG, "DIGIDOC: Unknown PIN type " + action.pinType());
+                System.out.println("DIGIDOC: Unknown PIN type " + action.pinType());
                 throw new IllegalArgumentException("Unknown pin type " + action.pinType());
         }
 
@@ -161,7 +185,11 @@ public final class CodeUpdateView extends CoordinatorLayout {
         AccessibilityUtils.setViewAccessibilityPaneTitle(toolbarView, overlayPaneTitleResId);
 
         successMessageView.setVisibility(successMessageVisible ? VISIBLE : GONE);
+        Timber.log(Log.DEBUG, "DIGIDOC: Is success message visible: " + successMessageView.getVisibility());
+        System.out.println("DIGIDOC: Is success message visible: " + successMessageView.getVisibility());
         if (successMessageVisible) {
+            Timber.log(Log.DEBUG, "DIGIDOC: Showing success message");
+            System.out.println("DIGIDOC: Showing success message");
             AccessibilityUtils.setContentDescription(successMessageView, getResources().getString(action.successMessageRes()));
             scrollView.smoothScrollTo(0, 0);
             new Handler(Looper.getMainLooper()).post(successMessageView::requestFocus);
@@ -171,10 +199,14 @@ public final class CodeUpdateView extends CoordinatorLayout {
         }
 
         if (state.equals(State.CLEAR)) {
+            Timber.log(Log.DEBUG, "DIGIDOC: STATE: CLEAR");
+            System.out.println("DIGIDOC: STATE: CLEAR");
             clear();
         }
 
         if (response == null) {
+            Timber.log(Log.DEBUG, "DIGIDOC: RESPONSE: NULL");
+            System.out.println("DIGIDOC: RESPONSE: NULL");
             setTextViewError(getContext(), null, currentLabelViewText, currentLabelView, currentView);
             setTextViewError(getContext(), null, newLabelViewText, newLabelView, newTextView);
             setTextViewError(getContext(), null, repeatLabelViewText, repeatLabelView, repeatView);
@@ -182,6 +214,13 @@ public final class CodeUpdateView extends CoordinatorLayout {
             CodeUpdateError currentError = response.currentError();
             CodeUpdateError newError = response.newError();
             CodeUpdateError repeatError = response.repeatError();
+
+            Timber.log(Log.DEBUG, "DIGIDOC: ERROR: CURRENTERROR: " + currentError);
+            Timber.log(Log.DEBUG, "DIGIDOC: ERROR: NEWERROR: " + newError);
+            Timber.log(Log.DEBUG, "DIGIDOC: ERROR: REPEATERROR: " + repeatError);
+            System.out.println("DIGIDOC: ERROR: CURRENTERROR: " + currentError);
+            System.out.println("DIGIDOC: ERROR: NEWERROR:" + newError);
+            System.out.println("DIGIDOC: ERROR: REPEATERROR: " + repeatError);
 
             if (currentError == null) {
                 setTextViewError(getContext(), null, currentLabelViewText, currentLabelView, currentView);
@@ -219,7 +258,7 @@ public final class CodeUpdateView extends CoordinatorLayout {
                 setTextViewError(getContext(), getResources().getString(action.newDateOfBirthErrorRes()), repeatLabelViewText, repeatLabelView, repeatView);
                 setViewContentDescription(repeatLabelViewText, getResources().getString(action.newDateOfBirthErrorRes()));
             } else if (newError instanceof CodeTooEasyError) {
-                setTextViewError(getContext(), getResources().getString(action.newDateOfBirthErrorRes()), repeatLabelViewText, repeatLabelView, repeatView);
+                setTextViewError(getContext(), getResources().getString(action.newTooEasyErrorRes()), repeatLabelViewText, repeatLabelView, repeatView);
                 setViewContentDescription(repeatLabelViewText, getResources().getString(action.newTooEasyErrorRes()));
             } else if (newError instanceof CodeSameAsCurrentError) {
                 setTextViewError(getContext(), getResources().getString(action.newSameAsCurrentErrorRes()), repeatLabelViewText, repeatLabelView, repeatView);
@@ -242,6 +281,8 @@ public final class CodeUpdateView extends CoordinatorLayout {
     }
 
     public void clear() {
+        Timber.log(Log.DEBUG, "DIGIDOC: Clearing");
+        System.out.println("DIGIDOC: Clearing");
         currentView.setText(null);
         newTextView.setText(null);
         repeatView.setText(null);

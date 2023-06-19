@@ -3,6 +3,7 @@ package ee.ria.DigiDoc.android.eid;
 import android.app.Application;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 
 import com.google.common.collect.ImmutableSet;
@@ -35,6 +36,7 @@ import io.reactivex.rxjava3.core.ObservableSource;
 import io.reactivex.rxjava3.core.ObservableTransformer;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import timber.log.Timber;
 
 import static ee.ria.DigiDoc.android.utils.IntentUtils.createBrowserIntent;
 
@@ -53,13 +55,21 @@ final class Processor implements ObservableTransformer<Action, Result> {
             Observable<Result.LoadResult> resultObservable = idCardService.data()
                     .map(idCardDataResponse -> {
                         if (idCardDataResponse.error() != null) {
+                            Timber.log(Log.DEBUG, "DIGIDOC: Load idCardDataResponse error: " + idCardDataResponse.error());
+                            System.out.println("DIGIDOC: Load idCardDataResponse error: " + idCardDataResponse.error());
+                            Timber.log(Log.DEBUG, "DIGIDOC: Load idCardDataResponse error: " + idCardDataResponse.error().getLocalizedMessage());
+                            System.out.println("DIGIDOC: Load idCardDataResponse error: " + idCardDataResponse.error().getLocalizedMessage());
                             return Result.LoadResult.failure(idCardDataResponse.error());
                         } else {
+                            Timber.log(Log.DEBUG, "DIGIDOC: Load idCardDataResponse success");
+                            System.out.println("DIGIDOC: Load idCardDataResponse success");
                             return Result.LoadResult.success(idCardDataResponse);
                         }
                     })
                     .onErrorReturn(Result.LoadResult::failure);
             if (action.clear()) {
+                Timber.log(Log.DEBUG, "DIGIDOC: Load idCardDataResponse clear");
+                System.out.println("DIGIDOC: Load idCardDataResponse clear");
                 return resultObservable
                         .startWithItem(Result.LoadResult.clear());
             }
@@ -71,19 +81,39 @@ final class Processor implements ObservableTransformer<Action, Result> {
 
         codeUpdate = upstream -> upstream.flatMap(action -> {
             CodeUpdateAction updateAction = action.action();
+            Timber.log(Log.DEBUG, "DIGIDOC: updateAction: " + updateAction);
+            System.out.println("DIGIDOC: updateAction: " + updateAction);
             CodeUpdateRequest request = action.request();
+            Timber.log(Log.DEBUG, "DIGIDOC: CodeUpdateRequest: " + request);
+            System.out.println("DIGIDOC: CodeUpdateRequest: " + request);
             IdCardData data = action.data();
+            Timber.log(Log.DEBUG, "DIGIDOC: IdCardData: " + data);
+            System.out.println("DIGIDOC: IdCardData: " + data);
             Token token = action.token();
+            Timber.log(Log.DEBUG, "DIGIDOC: Token: " + token);
+            System.out.println("DIGIDOC: Token: " + token);
             if (action.cleared()) {
+                Timber.log(Log.DEBUG, "DIGIDOC: Action cleared");
+                System.out.println("DIGIDOC: Action cleared");
                 return Observable.just(Result.CodeUpdateResult.clear())
-                        .doFinally(() -> sendCancellationAccessibilityEvent(updateAction, application,
-                                localeService.applicationConfigurationWithLocale(application.getApplicationContext(),
-                                        localeService.applicationLocale())));
+                        .doFinally(() -> {
+                            Timber.log(Log.DEBUG, "DIGIDOC: CodeUpdateResult.clear");
+                            System.out.println("DIGIDOC: CodeUpdateResult.clear");
+                            sendCancellationAccessibilityEvent(updateAction, application,
+                                    localeService.applicationConfigurationWithLocale(application.getApplicationContext(),
+                                            localeService.applicationLocale()));
+                        });
             } else if (updateAction == null) {
+                Timber.log(Log.DEBUG, "DIGIDOC: updateAction null");
+                System.out.println("DIGIDOC: updateAction null");
                 return Observable.just(Result.CodeUpdateResult.clear());
             } else if (request == null || data == null || token == null) {
+                Timber.log(Log.DEBUG, "DIGIDOC: request, data, token null");
+                System.out.println("DIGIDOC: request, data, token null");
                 if (updateAction.pinType().equals(CodeType.PUK)
                         && updateAction.updateType().equals(CodeUpdateType.UNBLOCK)) {
+                    Timber.log(Log.DEBUG, "DIGIDOC: CodeType PUK, CodeUpdateType UNBLOCK");
+                    System.out.println("DIGIDOC: CodeType PUK, CodeUpdateType UNBLOCK");
                     navigator.execute(Transaction
                             .activity(createBrowserIntent(application,
                                     R.string.eid_home_data_certificates_puk_link_url,
@@ -91,21 +121,39 @@ final class Processor implements ObservableTransformer<Action, Result> {
                                             localeService.applicationLocale())), null));
                     return Observable.just(Result.CodeUpdateResult.clear());
                 } else {
+                    Timber.log(Log.DEBUG, "DIGIDOC: action: " + updateAction);
+                    System.out.println("DIGIDOC: action: " + updateAction);
                     return Observable.just(Result.CodeUpdateResult.action(updateAction));
                 }
             } else {
+                Timber.log(Log.DEBUG, "DIGIDOC: Validating request");
+                System.out.println("DIGIDOC: Validating request");
                 CodeUpdateResponse response = validate(updateAction, request, data);
+                Timber.log(Log.DEBUG, "DIGIDOC: CodeUpdateResponse response: " + response.toString());
+                System.out.println("DIGIDOC: CodeUpdateResponse response: " + response);
                 if (!response.success()) {
+                    Timber.log(Log.DEBUG, "DIGIDOC: Response not successful");
+                    System.out.println("DIGIDOC: Response not successful");
+
+                    Timber.log(Log.DEBUG, "DIGIDOC: Response error: " + response.error());
+                    System.out.println("DIGIDOC: Response error: " + response.error());
                     return Observable.just(Result.CodeUpdateResult
                             .response(updateAction, response, null, null));
                 }
 
+                Timber.log(Log.DEBUG, "DIGIDOC: Response successful");
+                System.out.println("DIGIDOC: Response successful");
+
                 Single<IdCardData> operation;
                 if (updateAction.updateType().equals(CodeUpdateType.EDIT)) {
+                    Timber.log(Log.DEBUG, "DIGIDOC: Editing PIN");
+                    System.out.println("DIGIDOC: Editing PIN");
                     operation = idCardService
                             .editPin(token, updateAction.pinType(), request.currentValue(),
                                     request.newValue());
                 } else {
+                    Timber.log(Log.DEBUG, "DIGIDOC: Unblocking PIN");
+                    System.out.println("DIGIDOC: Unblocking PIN");
                     operation = idCardService
                             .unblockPin(token, updateAction.pinType(), request.currentValue(),
                                     request.newValue());
@@ -115,11 +163,14 @@ final class Processor implements ObservableTransformer<Action, Result> {
                         .flatMap(idCardData ->
                                 Observable
                                         .timer(3, TimeUnit.SECONDS)
-                                        .map(ignored ->
-                                                Result.CodeUpdateResult
-                                                        .hideSuccessResponse(updateAction,
-                                                                CodeUpdateResponse.valid(),
-                                                                idCardData, token))
+                                        .map(ignored -> {
+                                            Timber.log(Log.DEBUG, "DIGIDOC: hideSuccessResponse");
+                                            System.out.println("DIGIDOC: hideSuccessResponse");
+                                            return Result.CodeUpdateResult
+                                                    .hideSuccessResponse(updateAction,
+                                                            CodeUpdateResponse.valid(),
+                                                            idCardData, token);
+                                        })
                                         .startWithArray(
                                                 Result.CodeUpdateResult
                                                         .clearResponse(updateAction,
@@ -130,16 +181,31 @@ final class Processor implements ObservableTransformer<Action, Result> {
                                                                 CodeUpdateResponse.valid(),
                                                                 idCardData, token)))
                         .onErrorReturn(throwable -> {
+                            Timber.log(Log.DEBUG, "DIGIDOC: ID-card error: " + throwable.getLocalizedMessage());
+                            System.out.println("DIGIDOC: ID-card error: " + throwable.getLocalizedMessage());
                             IdCardData idCardData = IdCardService.data(token);
+                            Timber.log(Log.DEBUG, "DIGIDOC: idCardData: " + idCardData);
+                            System.out.println("DIGIDOC: idCardData: " + idCardData);
                             int retryCount = retryCount(updateAction, idCardData);
+
+                            Timber.log(Log.DEBUG, "DIGIDOC: retryCount: " + retryCount);
+                            System.out.println("DIGIDOC: retryCount: " + retryCount);
 
                             CodeUpdateResponse.Builder builder = CodeUpdateResponse.valid()
                                     .buildWith();
                             if (throwable instanceof CodeVerificationException && retryCount > 0) {
+                                Timber.log(Log.DEBUG, "DIGIDOC: CodeInvalidError");
+                                System.out.println("DIGIDOC: CodeInvalidError");
                                 builder.currentError(CodeInvalidError.create(retryCount));
                             } else {
                                 builder.error(throwable);
                             }
+
+                            Timber.log(Log.DEBUG, "DIGIDOC: CodeUpdateResponse error: " + builder.build().error());
+                            System.out.println("DIGIDOC: CodeUpdateResponse error: " + builder.build().error());
+
+                            Timber.log(Log.DEBUG, "DIGIDOC: CodeUpdateResponse error: " + builder.build().toString());
+                            System.out.println("DIGIDOC: CodeUpdateResponse error: " + builder.build().toString());
 
                             return Result.CodeUpdateResult
                                     .response(updateAction, builder.build(), idCardData, token);
@@ -163,7 +229,11 @@ final class Processor implements ObservableTransformer<Action, Result> {
 
     private static CodeUpdateResponse validate(CodeUpdateAction action, CodeUpdateRequest request,
                                                IdCardData data) {
+        Timber.log(Log.DEBUG, "DIGIDOC: Validating PIN");
+        System.out.println("DIGIDOC: Validating PIN");
         LocalDate dateOfBirth = data.personalData().dateOfBirth();
+        Timber.log(Log.DEBUG, "DIGIDOC: dateOfBirth: " + dateOfBirth);
+        System.out.println("DIGIDOC: dateOfBirth: " + dateOfBirth);
         ImmutableSet.Builder<String> dateOfBirthValuesBuilder = ImmutableSet.builder();
         if (dateOfBirth != null) {
             dateOfBirthValuesBuilder
@@ -178,25 +248,39 @@ final class Processor implements ObservableTransformer<Action, Result> {
 
         // current
         if (request.currentValue().length() < action.currentMinLength()) {
+            Timber.log(Log.DEBUG, "DIGIDOC: CodeMinLengthError (current)");
+            System.out.println("DIGIDOC: CodeMinLengthError (current)");
             builder.currentError(CodeMinLengthError.create(action.currentMinLength()));
         }
 
         // new
         if (request.newValue().length() < action.newMinLength()) {
+            Timber.log(Log.DEBUG, "DIGIDOC: CodeMinLengthError (new)");
+            System.out.println("DIGIDOC: CodeMinLengthError (new)");
             builder.newError(CodeMinLengthError.create(action.newMinLength()));
         } else if (action.updateType().equals(CodeUpdateType.EDIT)
                 && request.newValue().equals(request.currentValue())) {
+            Timber.log(Log.DEBUG, "DIGIDOC: CodeSameAsCurrentError (new)");
+            System.out.println("DIGIDOC: CodeSameAsCurrentError (new)");
             builder.newError(CodeSameAsCurrentError.create());
         } else if (data.personalData().personalCode().contains(request.newValue())) {
+            Timber.log(Log.DEBUG, "DIGIDOC: CodePartOfPersonalCodeError (new)");
+            System.out.println("DIGIDOC: CodePartOfPersonalCodeError (new)");
             builder.newError(CodePartOfPersonalCodeError.create());
         } else if (dateOfBirthValues.contains(request.newValue())) {
+            Timber.log(Log.DEBUG, "DIGIDOC: CodePartOfDateOfBirthError (new)");
+            System.out.println("DIGIDOC: CodePartOfDateOfBirthError (new)");
             builder.newError(CodePartOfDateOfBirthError.create());
         } else if (isCodeTooEasy(request.newValue())) {
+            Timber.log(Log.DEBUG, "DIGIDOC: CodeTooEasyError (new)");
+            System.out.println("DIGIDOC: CodeTooEasyError (new)");
             builder.newError(CodeTooEasyError.create());
         }
 
         // repeat
         if (!request.newValue().equals(request.repeatValue())) {
+            Timber.log(Log.DEBUG, "DIGIDOC: CodeRepeatMismatchError (repeat)");
+            System.out.println("DIGIDOC: CodeRepeatMismatchError (repeat)");
             builder.repeatError(CodeUpdateError.CodeRepeatMismatchError.create());
         }
 
