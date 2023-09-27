@@ -188,10 +188,8 @@ public class Application extends android.app.Application {
     // Timber
 
     private void setupTimber() {
-        if (isLoggingEnabled(getApplicationContext()) || BuildConfig.DEBUG) {
-            Timber.plant(new Timber.DebugTree());
-            Timber.plant(new FileLoggingTree(getApplicationContext()));
-        }
+        Timber.plant(new Timber.DebugTree());
+        Timber.plant(new FileLoggingTree(getApplicationContext()));
         // TODO error reporting
     }
 

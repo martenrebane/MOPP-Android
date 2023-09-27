@@ -83,29 +83,28 @@ public class ServiceGenerator {
     }
 
     private static void addLoggingInterceptor(OkHttpClient.Builder httpClientBuilder, Context context) {
-        if (isLoggingEnabled(context) || BuildConfig.DEBUG) {
             Timber.log(Log.DEBUG, "Adding logging interceptor to HTTP client");
             if (loggingInterceptor == null) {
                 loggingInterceptor = new HttpLoggingInterceptor();
                 loggingInterceptor.level(HttpLoggingInterceptor.Level.BODY);
-            }
+
             if (!httpClientBuilder.interceptors().contains(loggingInterceptor)) {
                 httpClientBuilder.addInterceptor(loggingInterceptor);
             }
             httpClientBuilder.addInterceptor(chain -> {
                 Request request = chain.request();
-                if (isLoggingEnabled(context) || BuildConfig.DEBUG) {
-                    Timber.log(Log.DEBUG, request.method() + " " + request.url());
-                    Headers headers = request.headers();
-                    Timber.log(Log.DEBUG, "Headers: " + Arrays.deepToString(new Headers[]{headers}));
-                    RequestBody requestBody = request.body();
-                    if (requestBody != null) {
-                        try (Buffer buffer = new Buffer()) {
-                            requestBody.writeTo(buffer);
-                            Timber.log(Log.DEBUG, " Body: " + buffer.readUtf8());
-                        }
+
+                Timber.log(Log.DEBUG, request.method() + " " + request.url());
+                Headers headers = request.headers();
+                Timber.log(Log.DEBUG, "Headers: " + Arrays.deepToString(new Headers[]{headers}));
+                RequestBody requestBody = request.body();
+                if (requestBody != null) {
+                    try (Buffer buffer = new Buffer()) {
+                        requestBody.writeTo(buffer);
+                        Timber.log(Log.DEBUG, " Body: " + buffer.readUtf8());
                     }
                 }
+
                 return chain.proceed(request);
             });
         }

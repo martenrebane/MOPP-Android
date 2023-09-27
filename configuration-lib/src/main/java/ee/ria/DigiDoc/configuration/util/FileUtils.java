@@ -132,7 +132,7 @@ public class FileUtils {
     }
 
     private static void logMessage(Level level, String message) {
-        if (BuildConfig.DEBUG && logger.isLoggable(level)) {
+        if (logger.isLoggable(level)) {
             logger.log(level, message);
         }
     }
