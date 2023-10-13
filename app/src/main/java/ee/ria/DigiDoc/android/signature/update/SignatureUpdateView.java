@@ -230,7 +230,10 @@ public final class SignatureUpdateView extends LinearLayout implements ContentVi
         ContentView.addInvisibleElement(getContext(), this);
 
         View lastElementView = findViewById(R.id.lastInvisibleElement);
-        lastElementView.setVisibility(VISIBLE);
+        System.out.println("DIGIDOC: lastElementView " + lastElementView);
+        if (lastElementView != null) {
+            lastElementView.setVisibility(VISIBLE);
+        }
 
         ContentView.removeInvisibleElementScrollListener(listView);
         ContentView.addInvisibleElementScrollListener(listView, lastElementView);
@@ -354,12 +357,14 @@ public final class SignatureUpdateView extends LinearLayout implements ContentVi
         }
 
         if (isNestedContainer) {
+            System.out.println("DIGIDOC: isNestedContainer");
             sendButton.setVisibility(GONE);
             signatureButtonSpace.setVisibility(GONE);
             encryptButtonSpace.setVisibility(GONE);
             signatureAddButton.setVisibility(GONE);
             signatureEncryptButton.setVisibility(GONE);
         } else {
+            System.out.println("DIGIDOC: isNestedContainer else");
             signatureEncryptButton.setVisibility(isExistingContainer ? VISIBLE : GONE);
             sendButton.setVisibility(isExistingContainer ? VISIBLE : GONE);
             signatureButtonSpace.setVisibility(isExistingContainer ? VISIBLE : GONE);
