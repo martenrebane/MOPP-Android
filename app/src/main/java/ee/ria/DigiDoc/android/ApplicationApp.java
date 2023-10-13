@@ -110,7 +110,7 @@ public class ApplicationApp extends android.app.Application {
     public void onCreate() {
         setupAppLogging();
         setupTSLFiles();
-        setupStrictMode();
+//        setupStrictMode();
         super.onCreate();
         setupBouncyCastle();
         setupTimber();
