@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 
 import okhttp3.Authenticator;
 import okhttp3.Credentials;
+import okhttp3.Response;
 
 public class ProxyUtil {
 
@@ -29,9 +30,14 @@ public class ProxyUtil {
                 if (systemProxy.getUsername() != null && !systemProxy.getUsername().isEmpty() &&
                         systemProxy.getPassword() != null && !systemProxy.getPassword().isEmpty()) {
                     authenticator = (route, response) -> {
+                        if (hasRetried(response)) {
+                            return null;
+                        }
+
                         String credential = Credentials.basic(systemProxy.getUsername(), systemProxy.getPassword());
                         return response.request().newBuilder()
                                 .header("Proxy-Authorization", credential)
+                                .header("Authorization", credential)
                                 .build();
                     };
                 }
@@ -39,24 +45,21 @@ public class ProxyUtil {
             }
             case MANUAL_PROXY -> {
                 Authenticator authenticator = (route, response) -> {
+                    if (hasRetried(response)) {
+                        return null;
+                    }
+
                     String credential = Credentials.basic(manualProxySettings.getUsername(),
                             manualProxySettings.getPassword());
                     return response.request().newBuilder()
                             .header("Proxy-Authorization", credential)
+                            .header("Authorization", credential)
                             .build();
                 };
                 return getProxyConfig(manualProxySettings, authenticator).join();
             }
         }
         return new ProxyConfig(null, Authenticator.NONE);
-    }
-
-    public static boolean useHTTPSProxy(boolean isProxySSLEnabled, ManualProxy manualProxySettings) {
-        String host = manualProxySettings.getHost();
-        if (host != null) {
-            return isProxySSLEnabled || !host.isEmpty() && !host.startsWith("https");
-        }
-        return false;
     }
 
     private static CompletableFuture<ProxyConfig> getProxyConfig(@Nullable ManualProxy manualProxy, Authenticator authenticator) {
@@ -67,5 +70,10 @@ public class ProxyUtil {
             }
             return new ProxyConfig(null, authenticator != null ? authenticator : Authenticator.NONE);
         });
+    }
+
+    private static boolean hasRetried(Response response) {
+        return !response.isSuccessful() &&
+                response.request().header("Proxy-Authorization") != null;
     }
 }

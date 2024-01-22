@@ -61,6 +61,7 @@ import ee.ria.DigiDoc.android.main.settings.SettingsDataStore;
 import ee.ria.DigiDoc.android.utils.ClickableDialogUtil;
 import ee.ria.DigiDoc.android.utils.TSLException;
 import ee.ria.DigiDoc.android.utils.TSLUtil;
+import ee.ria.DigiDoc.android.utils.ToastUtil;
 import ee.ria.DigiDoc.android.utils.ViewDisposables;
 import ee.ria.DigiDoc.android.utils.navigator.ContentView;
 import ee.ria.DigiDoc.android.utils.navigator.Navigator;
@@ -405,7 +406,10 @@ public final class DiagnosticsView extends CoordinatorLayout implements ContentV
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         (tslVersion) -> tslUrlTextView.append(" ("+ tslVersion + ")"),
-                        (error) -> Timber.log(Log.ERROR, error, "Error reading TSL version")
+                        (error) -> {
+                            Timber.log(Log.ERROR, error, "Error reading TSL version");
+                            ToastUtil.showError(navigator.activity(), R.string.no_internet_connection);
+                        }
                 );
     }
 
@@ -424,14 +428,12 @@ public final class DiagnosticsView extends CoordinatorLayout implements ContentV
 
     private Observable<Integer> getObservableTslVersion(String tslUrl) {
         ProxySetting proxySetting = getProxySetting();
-        boolean isProxySSLEnabled = settingsDataStore.getIsProxyForSSLEnabled();
-        boolean useHTTPSProxy = ProxyUtil.useHTTPSProxy(isProxySSLEnabled, getManualProxySettings());
         ProxyConfig proxyConfig = ProxyUtil.getProxy(proxySetting, getManualProxySettings());
 
         return Observable.fromCallable(() -> {
             OkHttpClient.Builder builder = new OkHttpClient.Builder()
-                    .proxy(proxySetting == ProxySetting.NO_PROXY || !useHTTPSProxy ? Proxy.NO_PROXY : proxyConfig.proxy())
-                    .proxyAuthenticator(proxySetting == ProxySetting.NO_PROXY || !useHTTPSProxy ? Authenticator.NONE : proxyConfig.authenticator())
+                    .proxy(proxySetting == ProxySetting.NO_PROXY ? Proxy.NO_PROXY : proxyConfig.proxy())
+                    .proxyAuthenticator(proxySetting == ProxySetting.NO_PROXY ? Authenticator.NONE : proxyConfig.authenticator())
                     .hostnameVerifier(OkHostnameVerifier.INSTANCE)
                     .connectTimeout(DEFAULT_TIMEOUT, TimeUnit.SECONDS)
                     .readTimeout(DEFAULT_TIMEOUT, TimeUnit.SECONDS)

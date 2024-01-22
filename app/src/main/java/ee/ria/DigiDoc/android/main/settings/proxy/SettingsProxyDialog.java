@@ -118,18 +118,18 @@ public class SettingsProxyDialog extends Dialog {
         if (settingsDataStore != null) {
             ProxySetting currentProxySetting = settingsDataStore.getProxySetting();
             if (currentProxySetting.equals(MANUAL_PROXY)) {
-                manualProxySettings.setHost(host.getEditableText().toString());
-                String portNumber = port.getEditableText().toString();
+                manualProxySettings.setHost(host.getEditableText().toString().trim());
+                String portNumber = port.getEditableText().toString().trim();
                 try {
                     manualProxySettings.setPort(
                             portNumber.isEmpty() || !isValidPortNumber(portNumber) ? 80 :
-                                    Integer.parseInt(port.getEditableText().toString()));
+                                    Integer.parseInt(port.getEditableText().toString().trim()));
                 } catch (NumberFormatException nfe) {
                     Timber.log(Log.ERROR, nfe, "Unable to get the port number");
                     manualProxySettings.setPort(80);
                 }
-                manualProxySettings.setUsername(username.getEditableText().toString());
-                manualProxySettings.setPassword(password.getEditableText().toString());
+                manualProxySettings.setUsername(username.getEditableText().toString().trim());
+                manualProxySettings.setPassword(password.getEditableText().toString().trim());
                 setManualProxySettings(settingsDataStore, manualProxySettings);
             } else {
                 clearProxySettings(settingsDataStore);
