@@ -45,7 +45,7 @@ class CentralConfigurationClient {
     }
 
     String getConfiguration() {
-        CompletableFuture<String> future = requestData(context, centralConfigurationServiceUrl + "/config.json");
+        CompletableFuture<String> future = requestData(centralConfigurationServiceUrl + "/config.json");
         future.exceptionally(e -> {
             Timber.log(Log.ERROR, e, String.format("%s %s", "Unable to get configuration", e.getLocalizedMessage()));
             Toast.makeText(context, R.string.no_internet_connection, Toast.LENGTH_LONG).show();
@@ -55,7 +55,7 @@ class CentralConfigurationClient {
     }
 
     String getConfigurationSignature() {
-        CompletableFuture<String> future = requestData(context, centralConfigurationServiceUrl + "/config.rsa");
+        CompletableFuture<String> future = requestData(centralConfigurationServiceUrl + "/config.rsa");
         future.exceptionally(e -> {
             Timber.log(Log.ERROR, e, String.format("%s %s", "Unable to get configuration signature", e.getLocalizedMessage()));
             Toast.makeText(context, R.string.no_internet_connection, Toast.LENGTH_LONG).show();
@@ -65,7 +65,7 @@ class CentralConfigurationClient {
     }
 
     String getConfigurationSignaturePublicKey() {
-        CompletableFuture<String> future = requestData(context, centralConfigurationServiceUrl + "/config.pub");
+        CompletableFuture<String> future = requestData(centralConfigurationServiceUrl + "/config.pub");
         future.exceptionally(e -> {
             Timber.log(Log.ERROR, e, String.format("%s %s", "Unable to get configuration public key", e.getLocalizedMessage()));
             Toast.makeText(context, R.string.no_internet_connection, Toast.LENGTH_LONG).show();
@@ -74,18 +74,13 @@ class CentralConfigurationClient {
         return future.join();
     }
 
-    private CompletableFuture<String> requestData(Context context, String url) {
+    private CompletableFuture<String> requestData(String url) {
         CompletableFuture<String> result = new CompletableFuture<>();
-
-        ManualProxy manualProxy = getManualProxySettings(context);
-        String credential = Credentials.basic(manualProxy.getUsername(), manualProxy.getPassword());
 
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader("Content-Type", "application/json")
                 .addHeader("User-Agent", userAgent)
-                .addHeader("Proxy-Authorization", credential)
-                .addHeader("Authorization", credential)
                 .build();
 
         if (httpClient != null) {
@@ -154,10 +149,22 @@ class CentralConfigurationClient {
 
         if (context != null) {
             ProxySetting proxySetting = getProxySetting(context);
-            ProxyConfig proxyConfig = ProxyUtil.getProxy(proxySetting, getManualProxySettings(context));
+            ManualProxy manualProxy = getManualProxySettings(context);
+            ProxyConfig proxyConfig = ProxyUtil.getProxy(proxySetting, manualProxy);
 
             builder.proxy(proxySetting == ProxySetting.NO_PROXY ? Proxy.NO_PROXY : proxyConfig.proxy())
                     .proxyAuthenticator(proxySetting == ProxySetting.NO_PROXY ? Authenticator.NONE : proxyConfig.authenticator());
+
+            builder.addInterceptor(chain -> {
+                Request originalRequest = chain.request();
+                String credential = Credentials.basic(manualProxy.getUsername(), manualProxy.getPassword());
+                Request.Builder requestBuilder = originalRequest.newBuilder()
+                        .addHeader("Proxy-Authorization", credential)
+                        .addHeader("Authorization", credential);
+
+                Request newRequest = requestBuilder.build();
+                return chain.proceed(newRequest);
+            });
         }
 
         return builder;
