@@ -3,9 +3,13 @@ package ee.ria.DigiDoc.android.signature.home;
 import static com.jakewharton.rxbinding4.view.RxView.clicks;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.util.AttributeSet;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
@@ -54,6 +58,20 @@ public final class SignatureHomeView extends CoordinatorLayout implements HomeVi
             createButton.requestFocus();
             createButton.sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED);
         }, 2000);
+
+        LinearLayout linearLayout = findViewById(R.id.signatureHomeLayout);
+        Button crashButton = new Button(navigator.activity());
+        crashButton.setText("Test Crash");
+        crashButton.setTextColor(getResources().getColor(R.color.material_color_white, null));
+        crashButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                throw new RuntimeException("Testing the framework crash"); // Force a crash
+            }
+        });
+
+        linearLayout.addView(crashButton, new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
     }
 
     @Override
