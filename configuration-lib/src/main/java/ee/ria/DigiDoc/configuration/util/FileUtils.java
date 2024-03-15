@@ -1,5 +1,7 @@
 package ee.ria.DigiDoc.configuration.util;
 
+import static ee.ria.DigiDoc.common.FileUtil.logMessage;
+
 import android.util.Log;
 
 import org.apache.commons.io.FilenameUtils;
@@ -15,15 +17,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import ee.ria.DigiDoc.common.FileUtil;
-import ee.ria.DigiDoc.configuration.BuildConfig;
 import timber.log.Timber;
 
 public class FileUtils {
-
-    private static final Logger logger = Logger.getLogger(FileUtils.class.getName());
 
     public static String readFileContent(String filePath) {
         try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
@@ -94,16 +91,6 @@ public class FileUtils {
         }
     }
 
-    public static void createDirectoryIfNotExist(String directory) {
-        File destinationDirectory = new File(directory);
-        if (!destinationDirectory.exists()) {
-            boolean isDirsCreated = destinationDirectory.mkdirs();
-            if (isDirsCreated) {
-                logMessage(Level.INFO, "Directories created for " + directory);
-            }
-        }
-    }
-
     public static boolean fileExists(String filePath) {
         return new File(filePath).exists();
     }
@@ -128,12 +115,6 @@ public class FileUtils {
             }
         } catch (IOException e) {
             Timber.log(Log.ERROR, e, "Failed to open file: %s", fileName);
-        }
-    }
-
-    private static void logMessage(Level level, String message) {
-        if (BuildConfig.DEBUG && logger.isLoggable(level)) {
-            logger.log(level, message);
         }
     }
 }
