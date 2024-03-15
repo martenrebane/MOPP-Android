@@ -39,11 +39,11 @@ jobs:
           languages: ${{ matrix.language }}
           queries: +security-and-quality
 
-      - name: Setup Gradle and Build RIA DigiDoc
-        uses: gradle/gradle-build-action@v2
-        with:
-          gradle-version: wrapper
-          arguments: clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=${{ env.APP_VERSION_NAME }}.${{ env.BUILD_NUMBER }} assemble --debug -PskipGoogleServices
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+
+      - name: Build RIA DigiDoc
+        run: ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=${{ env.APP_VERSION_NAME }}.${{ env.BUILD_NUMBER }} assemble --debug -PskipGoogleServices
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
