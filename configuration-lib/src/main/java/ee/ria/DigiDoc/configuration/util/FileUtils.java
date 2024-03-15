@@ -1,7 +1,5 @@
 package ee.ria.DigiDoc.configuration.util;
 
-import static ee.ria.DigiDoc.common.FileUtil.logMessage;
-
 import android.util.Log;
 
 import org.apache.commons.io.FilenameUtils;
@@ -17,10 +15,14 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import ee.ria.DigiDoc.common.BuildConfig;
 import timber.log.Timber;
 
 public class FileUtils {
+
+    private static final Logger logger = Logger.getLogger(FileUtils.class.getName());
 
     public static String readFileContent(String filePath) {
         try (FileInputStream fileInputStream = new FileInputStream(filePath)) {
@@ -115,6 +117,12 @@ public class FileUtils {
             }
         } catch (IOException e) {
             Timber.log(Log.ERROR, e, "Failed to open file: %s", fileName);
+        }
+    }
+
+    private static void logMessage(Level level, String message) {
+        if (BuildConfig.DEBUG && logger.isLoggable(level)) {
+            logger.log(level, message);
         }
     }
 }
