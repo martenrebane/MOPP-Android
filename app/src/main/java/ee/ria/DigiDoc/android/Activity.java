@@ -98,6 +98,8 @@ public final class Activity extends AppCompatActivity {
 
             Intent intent = sanitizeIntent(getIntent());
 
+            ViewType viewType = settingsDataStore.getViewType();
+
             if (viewType != null) {
                 intent.putExtra(VIEW_TYPE, viewType.name());
                 rootScreenFactory.intent(intent, this);
