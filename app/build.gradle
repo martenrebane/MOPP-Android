@@ -32,12 +32,6 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    signingConfigs {
-        debug {
-            storeFile file('../debug.keystore')
-        }
-    }
-
     testOptions {
         execution 'ANDROIDX_TEST_ORCHESTRATOR'
     }
@@ -46,17 +40,6 @@ android {
         debug {
             debuggable true
             applicationIdSuffix '.debug'
-            signingConfig signingConfigs.debug
-            matchingFallbacks = ['debug']
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
-                    'proguard-rules.pro'
-        }
-        develop {
-            debuggable true
-            applicationIdSuffix '.develop'
-            signingConfig signingConfigs.debug
             matchingFallbacks = ['debug']
             minifyEnabled true
             shrinkResources true
