@@ -1,0 +1,30 @@
+workflows:
+  ria-digidoc-android:
+    name: RIA DigiDoc Android
+    max_build_duration: 30
+    instance_type: mac_mini_m1
+    environment:
+      java: 17
+    scripts:
+      - name: Set Android SDK location
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+      - name: Get RIA DigiDoc version
+        script: |
+          echo "APP_VERSION_NAME=$(grep 'appVersionName=' gradle.properties | cut -d'=' -f 2 | cut -d'-' -f 1)" >> $CM_ENV
+      - name: Setup Gradle and Build RIA DigiDoc
+        script: |
+          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$BUILD_NUMBER assemble --debug -PskipGoogleServices
+      - name: Rename APK
+        script: |
+          mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/"RIA_DigiDoc_$APP_VERSION_NAME.$BUILD_NUMBER-unsigned.apk"
+
+    artifacts:
+      - app/build/outputs/apk/release/*.apk
+    publishing:
+      email:
+        recipients:
+          - marten.rebane@nortal.com
+        notify:
+          success: true
+          failure: true
