@@ -5,10 +5,27 @@ workflows:
     instance_type: mac_mini_m1
     environment:
       java: 17
+      groups:
+        - "repo.ria"
+        - "live"
     scripts:
       - name: Set Android SDK location
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+#      - name: Set up environment variables
+#        script: |
+#          if [ "$ENVIRONMENT" == "staging" ]; then
+#            export API_URL=$STAGING_API_URL
+#            export API_KEY=$STAGING_API_KEY
+#          elif [ "$ENVIRONMENT" == "production" ]; then
+#            export API_URL=$PRODUCTION_API_URL
+#            export API_KEY=$PRODUCTION_API_KEY
+#          else
+#            echo "Invalid environment: $ENVIRONMENT"
+#            exit 1
+#          fi
+#          echo "API_URL is $API_URL"
+#          echo "API_KEY is $API_KEY"
       - name: Get RIA DigiDoc version
         script: |
           echo "APP_VERSION_NAME=$(grep 'appVersionName=' gradle.properties | cut -d'=' -f 2 | cut -d'-' -f 1)" >> $CM_ENV
