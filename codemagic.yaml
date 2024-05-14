@@ -19,7 +19,7 @@ scripts:
       script: |
         #!/usr/bin/env bash
         source build_number.env
-        BUILD_NUMBER=$((BUILD_NUMBER + 1))
+        BUILD_NUMBER=$((BUILD_NUMBER + 3))
         echo "BUILD_NUMBER=$BUILD_NUMBER" > build_number.env
         echo "New build number: $BUILD_NUMBER"
 
