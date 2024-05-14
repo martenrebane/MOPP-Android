@@ -1,31 +1,16 @@
 workflows:
-  ria-digidoc-android:
-    name: RIA DigiDoc Android
+  repo-ria:
+    name: RIA DigiDoc Android - Repo.ria configuration
     max_build_duration: 30
     instance_type: mac_mini_m1
     environment:
       java: 17
       groups:
         - "repo.ria"
-        - "live"
     scripts:
       - name: Set Android SDK location
         script: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
-#      - name: Set up environment variables
-#        script: |
-#          if [ "$ENVIRONMENT" == "staging" ]; then
-#            export API_URL=$STAGING_API_URL
-#            export API_KEY=$STAGING_API_KEY
-#          elif [ "$ENVIRONMENT" == "production" ]; then
-#            export API_URL=$PRODUCTION_API_URL
-#            export API_KEY=$PRODUCTION_API_KEY
-#          else
-#            echo "Invalid environment: $ENVIRONMENT"
-#            exit 1
-#          fi
-#          echo "API_URL is $API_URL"
-#          echo "API_KEY is $API_KEY"
       - name: Get RIA DigiDoc version
         script: |
           echo "APP_VERSION_NAME=$(grep 'appVersionName=' gradle.properties | cut -d'=' -f 2 | cut -d'-' -f 1)" >> $CM_ENV
@@ -35,6 +20,28 @@ workflows:
       - name: Rename APK
         script: |
           mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/"RIA_DigiDoc_$APP_VERSION_NAME.$BUILD_NUMBER-unsigned.apk"
+  live:
+    name: RIA DigiDoc Android - Live configuration
+    max_build_duration: 30
+    instance_type: mac_mini_m1
+    environment:
+      java: 17
+      groups:
+        - "live"
+    scripts:
+      - name: Set Android SDK location
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+      - name: Get RIA DigiDoc version
+        script: |
+          echo "APP_VERSION_NAME=$(grep 'appVersionName=' gradle.properties | cut -d'=' -f 2 | cut -d'-' -f 1)" >> $CM_ENV
+      - name: Setup Gradle and Build RIA DigiDoc
+        script: |
+          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$BUILD_NUMBER assemble --debug -PskipGoogleServices
+      - name: Rename APK
+        script: |
+          mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/"RIA_DigiDoc_$APP_VERSION_NAME.$BUILD_NUMBER-unsigned.apk"
+
 
     artifacts:
       - app/build/outputs/apk/release/*.apk
