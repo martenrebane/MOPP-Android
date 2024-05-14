@@ -24,6 +24,15 @@ workflows:
       - name: Rename APK
         script: |
           mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/"RIA_DigiDoc_$APP_VERSION_NAME.$BUILD_NUMBER-unsigned.apk"
+    artifacts:
+      - app/build/outputs/apk/release/*.apk
+    publishing:
+      email:
+        recipients:
+          - marten.rebane@nortal.com
+        notify:
+          success: true
+          failure: true
   live:
     name: RIA DigiDoc Android - Live configuration
     max_build_duration: 30
@@ -33,10 +42,8 @@ workflows:
       groups:
         - "live"
     scripts:
-      - name: Set Android SDK location
-        script: ${{ scripts.set_android_sdk_location }}
-      - name: Get RIA DigiDoc version
-        script: ${{ get_app_version }}
+      - *set_android_sdk_location
+      - *get_app_version
       - name: Setup Gradle and Build RIA DigiDoc
         script: |
           ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$BUILD_NUMBER assemble --debug -PskipGoogleServices
