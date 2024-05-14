@@ -1,8 +1,12 @@
 scripts:
-  set_android_sdk_location:
-    echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
-  get_app_version:
-    echo "APP_VERSION_NAME=$(grep 'appVersionName=' gradle.properties | cut -d'=' -f 2 | cut -d'-' -f 1)" >> $CM_ENV
+  - &set_android_sdk_location
+  - name: "Set Android SDK location"
+    script: |
+      echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+  - &get_app_version
+  - name: "Get RIA DigiDoc version"
+    script: |
+      echo "APP_VERSION_NAME=$(grep 'appVersionName=' gradle.properties | cut -d'=' -f 2 | cut -d'-' -f 1)" >> $CM_ENV
 
 workflows:
   repo-ria:
@@ -11,13 +15,9 @@ workflows:
     instance_type: mac_mini_m1
     environment:
       java: 17
-      groups:
-        - "repo.ria"
     scripts:
-      - name: Set Android SDK location
-        script: ${{ scripts.set_android_sdk_location }}
-      - name: Get RIA DigiDoc version
-        script: ${{ get_app_version }}
+      - *set_android_sdk_location
+      - *get_app_version
       - name: Setup Gradle and Build RIA DigiDoc
         script: |
           ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$BUILD_NUMBER assemble --debug -PskipGoogleServices
