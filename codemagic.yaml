@@ -12,7 +12,6 @@ workflows:
     environment:
       java: 17
       groups:
-        - "build_configration"
         - "repo.ria"
     scripts:
       - name: Set Android SDK location
