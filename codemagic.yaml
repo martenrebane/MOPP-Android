@@ -1,8 +1,4 @@
 inputs:
-  max_build_duration:
-    type: string
-    default: 60m
-    description: "Maximum build duration"
   environment.java:
     type: string
     default: 17
@@ -22,6 +18,7 @@ workflows:
     environment:
       java: ${{ inputs.environment.java }}
       groups:
+        - "build_configration"
         - "repo.ria"
     scripts:
       - name: Set Android SDK location
