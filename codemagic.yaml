@@ -1,15 +1,21 @@
-variables:
-  maxbuildduration: 30
+inputs:
+  max_build_duration:
+    type: string
+    default: 60m
+    description: "Maximum build duration"
   instance_type: mac_mini_m1
-  environment_java: 17
+  environment.java:
+    type: string
+    default: 17
+    description: "Java version to use"
 
 workflows:
   repo-ria:
     name: RIA DigiDoc Android - Repo.ria configuration
-    max_build_duration: $maxbuildduration
-    instance_type: mac_mini_m1
+    max_build_duration: ${{ inputs.max_build_duration }}
+    instance_type: ${{ inputs.instance_type }}
     environment:
-      java: 17
+      java: ${{ inputs.environment.java }}
       groups:
         - "repo.ria"
     scripts:
