@@ -7,21 +7,6 @@ scripts:
     name: "Get RIA DigiDoc version"
     script: |
       echo "APP_VERSION_NAME=$(grep 'appVersionName=' gradle.properties | cut -d'=' -f 2 | cut -d'-' -f 1)" >> $CM_ENV
-  - &read_build_number
-    name: Read build number
-    script: |
-      #!/usr/bin/env bash
-      source build_number.env
-      echo "Current build number: $BUILD_NUMBER"
-
-  - &increment_build_number
-      name: Increment build number
-      script: |
-        #!/usr/bin/env bash
-        source build_number.env
-        BUILD_NUMBER=$((BUILD_NUMBER + 3))
-        echo "BUILD_NUMBER=$BUILD_NUMBER" > build_number.env
-        echo "New build number: $BUILD_NUMBER"
 
 workflows:
   repo-ria:
@@ -33,14 +18,12 @@ workflows:
     scripts:
       - *set_android_sdk_location
       - *get_app_version
-      - *read_build_number
-      - *increment_build_number
       - name: Setup Gradle and Build RIA DigiDoc
         script: |
-          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$BUILD_NUMBER assemble --debug -PskipGoogleServices
+          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assemble --debug -PskipGoogleServices
       - name: Rename APK
         script: |
-          mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/"RIA_DigiDoc_$APP_VERSION_NAME.$BUILD_NUMBER-unsigned.apk"
+          mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/"RIA_DigiDoc_$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER-unsigned.apk"
     artifacts:
       - app/build/outputs/apk/release/*.apk
     publishing:
@@ -61,14 +44,12 @@ workflows:
     scripts:
       - *set_android_sdk_location
       - *get_app_version
-      - *read_build_number
-      - *increment_build_number
       - name: Setup Gradle and Build RIA DigiDoc
         script: |
-          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$BUILD_NUMBER assemble --debug -PskipGoogleServices
+          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assemble --debug -PskipGoogleServices
       - name: Rename APK
         script: |
-          mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/"RIA_DigiDoc_$APP_VERSION_NAME.$BUILD_NUMBER-unsigned.apk"
+          mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/"RIA_DigiDoc_$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER-unsigned.apk"
 
 
     artifacts:
