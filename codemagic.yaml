@@ -1,10 +1,10 @@
 scripts:
   - &set_android_sdk_location
-  - name: "Set Android SDK location"
+    name: "Set Android SDK location"
     script: |
       echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
   - &get_app_version
-  - name: "Get RIA DigiDoc version"
+    name: "Get RIA DigiDoc version"
     script: |
       echo "APP_VERSION_NAME=$(grep 'appVersionName=' gradle.properties | cut -d'=' -f 2 | cut -d'-' -f 1)" >> $CM_ENV
 
