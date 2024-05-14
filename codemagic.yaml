@@ -3,28 +3,31 @@ inputs:
     type: string
     default: 60m
     description: "Maximum build duration"
-  instance_type: mac_mini_m1
   environment.java:
     type: string
     default: 17
     description: "Java version to use"
 
+scripts:
+  set_android_sdk_location:
+    echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+  get_app_version:
+    echo "APP_VERSION_NAME=$(grep 'appVersionName=' gradle.properties | cut -d'=' -f 2 | cut -d'-' -f 1)" >> $CM_ENV
+
 workflows:
   repo-ria:
     name: RIA DigiDoc Android - Repo.ria configuration
     max_build_duration: ${{ inputs.max_build_duration }}
-    instance_type: ${{ inputs.instance_type }}
+    instance_type: mac_mini_m1
     environment:
       java: ${{ inputs.environment.java }}
       groups:
         - "repo.ria"
     scripts:
       - name: Set Android SDK location
-        script: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+        script: ${{ scripts.set_android_sdk_location }}
       - name: Get RIA DigiDoc version
-        script: |
-          echo "APP_VERSION_NAME=$(grep 'appVersionName=' gradle.properties | cut -d'=' -f 2 | cut -d'-' -f 1)" >> $CM_ENV
+        script: ${{ get_app_version }}
       - name: Setup Gradle and Build RIA DigiDoc
         script: |
           ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$BUILD_NUMBER assemble --debug -PskipGoogleServices
@@ -41,11 +44,9 @@ workflows:
         - "live"
     scripts:
       - name: Set Android SDK location
-        script: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/local.properties"
+        script: ${{ scripts.set_android_sdk_location }}
       - name: Get RIA DigiDoc version
-        script: |
-          echo "APP_VERSION_NAME=$(grep 'appVersionName=' gradle.properties | cut -d'=' -f 2 | cut -d'-' -f 1)" >> $CM_ENV
+        script: ${{ get_app_version }}
       - name: Setup Gradle and Build RIA DigiDoc
         script: |
           ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$BUILD_NUMBER assemble --debug -PskipGoogleServices
