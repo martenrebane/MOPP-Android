@@ -5,7 +5,6 @@ env:
 jobs:
   ubuntu:
     name: Build on Ubuntu
-    if: contains(github.repository, 'open-eid/MOPP-Android') && contains(github.ref, 'master')
     runs-on: ubuntu-latest
     env:
       APK_RELEASE_DIRECTORY: "app/build/outputs/apk/release"
@@ -30,39 +29,30 @@ jobs:
         uses: dawidd6/action-download-artifact@v6
         with:
           workflow: build.yml
-          branch: master
+          branch: android
           name: androidarm
           path: libdigidocpp-androidarm
-          repo: open-eid/libdigidocpp
+          repo: metsma/libdigidocpp
       - name: Download Libdigidocpp Android (androidarm64) artifact
         uses: dawidd6/action-download-artifact@v6
         with:
           workflow: build.yml
-          branch: master
+          branch: android
           name: androidarm64
           path: libdigidocpp-androidarm64
-          repo: open-eid/libdigidocpp
-      - name: Download Libdigidocpp Android (androidx86_64) artifact
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          workflow: build.yml
-          branch: master
-          name: androidx86_64
-          path: libdigidocpp-androidx86_64
-          repo: open-eid/libdigidocpp
+          repo: metsma/libdigidocpp
       - name: Extract libdigidocpp artifacts
         run: |
           mkdir libdigidocpp-files/
           mv libdigidocpp-androidarm/libdigidocpp.androidarm.zip libdigidocpp-files/
           mv libdigidocpp-androidarm64/libdigidocpp.androidarm64.zip libdigidocpp-files/
-          mv libdigidocpp-androidx86_64/libdigidocpp.androidx86_64.zip libdigidocpp-files/
           pwd
           ls -R -laht
-      #- name: Update libdigidocpp in project
-      #  run: |
-      #    pwd
-      #    ./gradlew common-lib:updateLibdigidocpp --dir=libdigidocpp-files/
-      #    ./gradlew sign-lib:updateLibdigidocpp --dir=libdigidocpp-files/
+      - name: Update libdigidocpp in project
+        run: |
+          pwd
+          ./gradlew common-lib:updateLibdigidocpp --dir=libdigidocpp-files/
+          ./gradlew sign-lib:updateLibdigidocpp --dir=libdigidocpp-files/
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
       - name: Test and Build with Gradle
