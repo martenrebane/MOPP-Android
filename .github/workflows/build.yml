@@ -55,8 +55,12 @@ jobs:
           ./gradlew sign-lib:updateLibdigidocpp --dir=libdigidocpp-files/
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
+      - name: Fetch default configuration
+        run: |
+          ./gradlew clean test --no-daemon fetchAndPackageDefaultConfiguration
+          ls -R -laht
       - name: Test and Build with Gradle
-        run: ./gradlew clean test --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=${{ env.APP_VERSION_NAME }}.${{ env.BUILD_NUMBER }} assembleRelease --info
+        run: ./gradlew clean test --no-daemon -PappVersionName=${{ env.APP_VERSION_NAME }}.${{ env.BUILD_NUMBER }} assembleRelease --info
       - name: Sign app APK
         uses: r0adkll/sign-android-release@v1
         id: signed_apk
