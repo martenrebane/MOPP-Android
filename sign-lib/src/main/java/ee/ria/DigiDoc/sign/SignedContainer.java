@@ -410,7 +410,7 @@ public abstract class SignedContainer {
                 Splitter.fixedLength(2).split(Hex.toHexString(bytes))).trim();
     }
 
-    private static Signature signature(ee.ria.libdigidocpp.Signature signature, boolean isTimestamp) throws CertificateException, IOException {
+    private static Signature signature(ee.ria.libdigidocpp.Signature signature, boolean isTimestamp) {
         String id = signature.id();
         String name = isTimestamp ? timestampName(signature) : signatureName(signature);
         Instant createdAt = Instant.parse(signature.trustedSigningTime());
@@ -421,9 +421,27 @@ public abstract class SignedContainer {
         String signersCertificateIssuer = "";
         X509Certificate signingCertificate = null;
 
-        byte[] encodedSigningCertificate = signature.signingCertificate().getEncoded();
-        byte[] encodedTimestampCertificate = signature.TimeStampCertificate().getEncoded();
-        byte[] encodedOcspCertificate = signature.OCSPCertificate().getEncoded();
+        byte[] encodedSigningCertificate = null;
+        byte[] encodedTimestampCertificate = null;
+        byte[] encodedOcspCertificate = null;
+
+        try {
+            encodedSigningCertificate = signature.signingCertificate().getEncoded();
+        } catch (Exception e) {
+            Timber.log(Log.DEBUG, e, "Signature does not have signing certificate");
+        }
+
+        try {
+            encodedTimestampCertificate = signature.TimeStampCertificate().getEncoded();
+        } catch (Exception e) {
+            Timber.log(Log.DEBUG, e, "Signature does not have timestamp certificate");
+        }
+
+        try {
+            encodedOcspCertificate = signature.OCSPCertificate().getEncoded();
+        } catch (Exception e) {
+            Timber.log(Log.DEBUG, e, "Signature does not have OCSP certificate");
+        }
 
         if (x509Certificate(encodedSigningCertificate) != null) {
             signersCertificateIssuer = getX509CertificateIssuer(x509Certificate(encodedSigningCertificate));
