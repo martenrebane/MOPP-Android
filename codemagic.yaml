@@ -20,10 +20,10 @@ workflows:
       - *get_app_version
       - name: Run tests
         script: |
-            ./gradlew clean test --no-daemon
+            ./gradlew clean test --no-daemon -PskipGoogleServices
       - name: Build RIA DigiDoc
         script: |
-          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assemble --debug
+          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assemble --debug -PskipGoogleServices
       - name: Rename and move APK
         script: |
           mkdir artifact/
