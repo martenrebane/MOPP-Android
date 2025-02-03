@@ -26,7 +26,7 @@ workflows:
           ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assemble --debug -PskipGoogleServices
       - name: Rename and move APK
         script: |
-          mkdir artifact/
+          mkdir app/build/outputs/apk/debug/artifact/
           mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/artifact/"RIA_DigiDoc_dev_$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER.apk"
     artifacts:
       - app/build/outputs/apk/debug/artifact/*.apk
