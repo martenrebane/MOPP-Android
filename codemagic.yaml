@@ -12,20 +12,24 @@ workflows:
   repo-ria:
     name: RIA DigiDoc Android - Repo.ria configuration
     max_build_duration: 30
-    instance_type: mac_mini_m1
+    instance_type: mac_mini_m2
     environment:
       java: 17
     scripts:
       - *set_android_sdk_location
       - *get_app_version
-      - name: Setup Gradle and Build RIA DigiDoc
+      - name: Run tests
         script: |
-          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assemble --debug -PskipGoogleServices
-      - name: Rename APK
+            ./gradlew clean test --no-daemon
+      - name: Build RIA DigiDoc
         script: |
-          mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/"RIA_DigiDoc_$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER-unsigned.apk"
+          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assemble --debug
+      - name: Rename and move APK
+        script: |
+          mkdir artifact/
+          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/artifact/"RIA_DigiDoc_dev_$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER.apk"
     artifacts:
-      - app/build/outputs/apk/release/*.apk
+      - app/build/outputs/apk/debug/artifact/*.apk
     publishing:
       email:
         recipients:
