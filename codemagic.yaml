@@ -15,6 +15,8 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       java: 17
+      groups:
+        - "dev"
     scripts:
       - *set_android_sdk_location
       - *get_app_version
@@ -40,7 +42,7 @@ workflows:
   live:
     name: RIA DigiDoc Android - Live configuration
     max_build_duration: 30
-    instance_type: mac_mini_m1
+    instance_type: mac_mini_m2
     environment:
       java: 17
       groups:
@@ -50,12 +52,10 @@ workflows:
       - *get_app_version
       - name: Setup Gradle and Build RIA DigiDoc
         script: |
-          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assemble --debug -PskipGoogleServices
+          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assembleRelease -PskipGoogleServices
       - name: Rename APK
         script: |
           mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/"RIA_DigiDoc_$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER-unsigned.apk"
-
-
     artifacts:
       - app/build/outputs/apk/release/*.apk
     publishing:
