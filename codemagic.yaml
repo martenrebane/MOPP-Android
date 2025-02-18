@@ -20,14 +20,31 @@ workflows:
       vars:
         BUILD_MODE: "release"  # Default
     inputs:
-      choice_input:
-        description: Choice input
+      defaultCentralConfigurationUrl_input:
+        description: Default Central Configuration URL
         type: choice
-        default: option 2 # Optional. If set, must be one of defined options.
-        options: # Required for choice input
-          - option 1
-          - option 2
-          - option 3
+        default: http://repo.ria/config
+        options:
+          - http://repo.ria/config
+          - https://id.eesti.ee
+          - https://id.test.eesti.ee
+          - http://10.0.25.57/updater
+      defaultCentralConfigurationUpdateInterval_input:
+        description: Default Central Configuration Update Interval
+        type: number
+        default: 4
+      defaultCentralConfigurationTslUrl_input:
+        description: Default Central Configuration TSL URL
+        type: choice
+        default: http://repo.ria/tsl/trusted-test-mp.xml
+        options:
+          - http://repo.ria/tsl/trusted-test-mp.xml
+          - https://ec.europa.eu/tools/lotl/eu-lotl.xml
+          - https://open-eid.github.io/test-TL/tl-mp-test-EE.xml
+      memberTsl_input:
+        description: TSL member lists
+        type: string
+        default: "EE;EE_T"
     scripts:
       - *set_android_sdk_location
       - *get_app_version
