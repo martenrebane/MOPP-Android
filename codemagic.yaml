@@ -17,6 +17,17 @@ workflows:
       java: 17
       groups:
         - "dev"
+      vars:
+        BUILD_MODE: "release"  # Default
+    inputs:
+      choice_input:
+        description: Choice input
+        type: choice
+        default: option 2 # Optional. If set, must be one of defined options.
+        options: # Required for choice input
+          - option 1
+          - option 2
+          - option 3
     scripts:
       - *set_android_sdk_location
       - *get_app_version
