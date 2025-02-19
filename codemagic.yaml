@@ -69,7 +69,7 @@ workflows:
       - name: Setup TSL environment
         script: |
           export DEFAULT_CENTRAL_CONFIGURATION_URL=${{ inputs.defaultCentralConfigurationUrl_input }}
-          export TSL_MEMBER_LIST=${{ inputs.memberTsl_input }}
+          export TSL_MEMBER_LIST="${{ inputs.memberTsl_input }}"
       - *set_android_sdk_location
       - *get_app_version
       - *get_google_services_json
