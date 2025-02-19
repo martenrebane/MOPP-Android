@@ -19,15 +19,15 @@ scripts:
         cd $CM_BUILD_DIR/app/src/main/assets && { mkdir tslFiles ; cd -; }
       fi
 
-      cd $CM_BUILD_DIR/app/src/main/assets/tslFiles && { wget $defaultCentralConfigurationTslUrl_input ; cd -; }
+      cd $CM_BUILD_DIR/app/src/main/assets/tslFiles && { wget $DEFAULT_CENTRAL_CONFIGURATION_URL ; cd -; }
       cd $CM_BUILD_DIR/app/src/main/assets/tslFiles && { wget "https://ec.europa.eu/tools/lotl/eu-lotl.xml" ; cd -; }
   
       if [ -f "$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" ]; then
-        python3 scripts/TSLXMLDownloader.py --tslFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename $defaultCentralConfigurationTslUrl_input)" --countries="$TSL_INCLUDE" --isDevBuild="True"
+        python3 scripts/TSLXMLDownloader.py --tslFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename $DEFAULT_CENTRAL_CONFIGURATION_URL)" --countries="$TSL_MEMBER_LIST" --isDevBuild="True"
       else
-        python3 scripts/TSLXMLDownloader.py --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename 'https://ec.europa.eu/tools/lotl/eu-lotl.xml')" --countries="$memberTsl_input" --isDevBuild="True"
+        python3 scripts/TSLXMLDownloader.py --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename 'https://ec.europa.eu/tools/lotl/eu-lotl.xml')" --countries="$TSL_MEMBER_LIST" --isDevBuild="True"
       fi
-      
+
       ls -lahtR
 
 workflows:
@@ -66,6 +66,10 @@ workflows:
         type: string
         default: "EE;EE_T"
     scripts:
+      - name: Setup TSL environment
+        script: |
+          export DEFAULT_CENTRAL_CONFIGURATION_URL = $defaultCentralConfigurationUrl_input
+          export TSL_MEMBER_LIST = $memberTsl_input
       - *set_android_sdk_location
       - *get_app_version
       - *get_google_services_json
