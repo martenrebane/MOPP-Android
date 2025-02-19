@@ -11,24 +11,6 @@ scripts:
     name: "Get Google Services configuration"
     script: |
       echo $GOOGLE_SERVICES_JSON | base64 --decode > $CM_BUILD_DIR/app/google-services.json
-  - &setup_tsl_files
-    name: "Setup TSL files"
-    script: |
-      if [ ! -d "$CM_BUILD_DIR/app/src/main/assets" ]; then
-        cd $CM_BUILD_DIR/app/src/main && { mkdir assets ; cd -; }
-        cd $CM_BUILD_DIR/app/src/main/assets && { mkdir tslFiles ; cd -; }
-      fi
-
-      cd $CM_BUILD_DIR/app/src/main/assets/tslFiles && { wget $DEFAULT_CENTRAL_CONFIGURATION_URL ; cd -; }
-      cd $CM_BUILD_DIR/app/src/main/assets/tslFiles && { wget "https://ec.europa.eu/tools/lotl/eu-lotl.xml" ; cd -; }
-  
-      if [ -f "$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" ]; then
-        python3 scripts/TSLXMLDownloader.py --tslFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename $DEFAULT_CENTRAL_CONFIGURATION_URL)" --countries="$TSL_MEMBER_LIST" --isDevBuild="True"
-      else
-        python3 scripts/TSLXMLDownloader.py --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename 'https://ec.europa.eu/tools/lotl/eu-lotl.xml')" --countries="$TSL_MEMBER_LIST" --isDevBuild="True"
-      fi
-
-      ls -lahtR
 
 workflows:
   repo-ria:
@@ -66,14 +48,28 @@ workflows:
         type: string
         default: "EE;EE_T"
     scripts:
-      - name: Setup TSL environment
-        script: |
-          export DEFAULT_CENTRAL_CONFIGURATION_URL=${{ inputs.defaultCentralConfigurationUrl_input }}
-          export TSL_MEMBER_LIST="${{ inputs.memberTsl_input }}"
       - *set_android_sdk_location
       - *get_app_version
       - *get_google_services_json
-      - *setup_tsl_files
+      - name: "Setup TSL files"
+        script: |
+          if [ ! -d "$CM_BUILD_DIR/app/src/main/assets" ]; then
+            cd $CM_BUILD_DIR/app/src/main && { mkdir assets ; cd -; }
+            cd $CM_BUILD_DIR/app/src/main/assets && { mkdir tslFiles ; cd -; }
+          fi
+  
+          cd $CM_BUILD_DIR/app/src/main/assets/tslFiles && { wget ${{ inputs.defaultCentralConfigurationUrl_input }} ; cd -; }
+          cd $CM_BUILD_DIR/app/src/main/assets/tslFiles && { wget "https://ec.europa.eu/tools/lotl/eu-lotl.xml" ; cd -; }
+  
+          if [ -f "$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" ]; then
+            python3 scripts/TSLXMLDownloader.py --tslFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename ${{ inputs.defaultCentralConfigurationUrl_input }})" --countries="${{ inputs.memberTsl_input }}" --isDevBuild="True"
+          else
+            python3 scripts/TSLXMLDownloader.py --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename 'https://ec.europa.eu/tools/lotl/eu-lotl.xml')" --countries="${{ inputs.memberTsl_input }}" --isDevBuild="True"
+          fi
+
+          mv "scripts/TSL/* "$CM_BUILD_DIR/app/src/main/assets/tslFiles/"
+
+          ls -lahtR
       - name: Run tests
         script: |
             ./gradlew clean test --no-daemon
