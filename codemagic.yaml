@@ -62,15 +62,18 @@ workflows:
           #wget -O "eu-lotl.xml" -P $CM_BUILD_DIR/app/src/main/assets/tslFiles "https://ec.europa.eu/tools/lotl/eu-lotl.xml"
   
           if [ -f "$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" ]; then
+            echo "Downloading TSL"
             echo "$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename ${{ inputs.defaultCentralConfigurationTslUrl_input }})"
             echo "scripts/TSLXMLDownloader.py --tslFile=$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml --tslTestFile=$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename ${{ inputs.defaultCentralConfigurationTslUrl_input }}) --countries=${{ inputs.memberTsl_input }} --isDevBuild=True"
             python3 scripts/TSLXMLDownloader.py --tslFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename ${{ inputs.defaultCentralConfigurationTslUrl_input }})" --countries="${{ inputs.memberTsl_input }}" --isDevBuild="True"
+            echo "Finished downloading TSL"
           else
             python3 scripts/TSLXMLDownloader.py --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename 'https://ec.europa.eu/tools/lotl/eu-lotl.xml')" --countries="${{ inputs.memberTsl_input }}" --isDevBuild="True"
           fi
 
+          echo "Moving TSLs"
           mv "scripts/TSL/* "$CM_BUILD_DIR/app/src/main/assets/tslFiles/"
-
+          echo "Done moving TSLs"
           ls -lahtR
       - name: Run tests
         script: |
