@@ -54,11 +54,9 @@ workflows:
       - *get_google_services_json
       - name: "Setup config and TSL files"
         script: |
-          if [ ! -d "app/src/main/assets" ]; then
-            mkdir -p app/src/main/assets/config
-            mkdir -p app/src/main/assets/tslFiles
-          fi
-          
+          mkdir -p app/src/main/assets/config
+          mkdir -p app/src/main/assets/tslFiles
+
           if [[ "${{ inputs.defaultCentralConfigurationTslUrl_input }}" == *"repo.ria"* ]]; then
             echo "Using repo.ria configuration"
             echo $REPO_RIA_DEFAULT_PROPERTIES | base64 --decode > app/src/main/assets/config/configuration.properties
