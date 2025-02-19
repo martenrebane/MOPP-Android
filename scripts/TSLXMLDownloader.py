@@ -121,13 +121,8 @@ class TSLDownloader:
             # Process country-specific data
             self.process_country(input_country, xmldoc, is_dev_build, processed_urls)
 
-        print(f"len input_country: {len(input_country)}")
-        print(f"mimetypeFound: {self.mimetypeFound}")
-
         # Validate country and mime type
         if len(input_country) == 2 and not self.mimetypeFound:
-            print(f"len input_country: {len(input_country)}")
-            print(f"mimetypeFound: {self.mimetypeFound}")
             raise Exception(f"Could not find mimetype for '{input_country}'. Verify input country code and check if the MimeType tag name has changed (nsx:MimeType) in TSL file.")
 
 
