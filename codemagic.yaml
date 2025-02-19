@@ -57,21 +57,30 @@ workflows:
             cd $CM_BUILD_DIR/app/src/main && { mkdir assets ; cd -; }
             cd $CM_BUILD_DIR/app/src/main/assets && { mkdir tslFiles ; cd -; }
           fi
-  
-          wget -O $(basename '${{ inputs.defaultCentralConfigurationTslUrl_input }}') -P $CM_BUILD_DIR/app/src/main/assets/tslFiles ${{ inputs.defaultCentralConfigurationTslUrl_input }}
-          #wget -O "eu-lotl.xml" -P $CM_BUILD_DIR/app/src/main/assets/tslFiles "https://ec.europa.eu/tools/lotl/eu-lotl.xml"
+          
+          if [[ "${{ inputs.defaultCentralConfigurationTslUrl_input }}" == *"repo.ria"* ]]; then
+            echo "Using repo.ria configuration"
+            echo $REPO_RIA_CONFIG | base64 --decode > $CM_BUILD_DIR/app/src/main/assets/tslFiles/default-config.json
+            echo $REPO_RIA_PUB_KEY | base64 --decode > $CM_BUILD_DIR/app/src/main/assets/tslFiles/default-config.pub
+            echo $REPO_RIA_RSA | base64 --decode > $CM_BUILD_DIR/app/src/main/assets/tslFiles/default-config.rsa
+          else
+            echo "Not using repo.ria configuration"
+          fi
+
+          wget -O "eu-lotl.xml" -P $CM_BUILD_DIR/app/src/main/assets/tslFiles "https://ec.europa.eu/tools/lotl/eu-lotl.xml"
   
           if [ -f "$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" ]; then
-            echo "Downloading TSL"
+            echo "Downloading TSL (local LOTL)"
             echo "$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename ${{ inputs.defaultCentralConfigurationTslUrl_input }})"
-            echo "scripts/TSLXMLDownloader.py --tslFile=$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml --tslTestFile=$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename ${{ inputs.defaultCentralConfigurationTslUrl_input }}) --countries=${{ inputs.memberTsl_input }} --isDevBuild=True"
             python3 scripts/TSLXMLDownloader.py --tslFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename ${{ inputs.defaultCentralConfigurationTslUrl_input }})" --countries="${{ inputs.memberTsl_input }}" --isDevBuild="True"
             echo "Finished downloading TSL"
           else
+            echo "Downloading TSL (remote LOTL)"
             python3 scripts/TSLXMLDownloader.py --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename 'https://ec.europa.eu/tools/lotl/eu-lotl.xml')" --countries="${{ inputs.memberTsl_input }}" --isDevBuild="True"
+            echo "Finished downloading TSL"
           fi
 
-          echo "Moving TSLs"
+          echo "Moving TSLs to app's assets"
           mv "scripts/TSL/*" "$CM_BUILD_DIR/app/src/main/assets/tslFiles/"
           echo "Done moving TSLs"
           ls -lahtR
