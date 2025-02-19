@@ -72,7 +72,7 @@ workflows:
           fi
 
           echo "Moving TSLs"
-          mv "scripts/TSL/* "$CM_BUILD_DIR/app/src/main/assets/tslFiles/"
+          mv "scripts/TSL/*" "$CM_BUILD_DIR/app/src/main/assets/tslFiles/"
           echo "Done moving TSLs"
           ls -lahtR
       - name: Run tests
