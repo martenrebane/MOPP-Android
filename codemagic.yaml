@@ -52,17 +52,19 @@ workflows:
       - *set_android_sdk_location
       - *get_app_version
       - *get_google_services_json
-      - name: "Setup TSL files"
+      - name: "Setup config and TSL files"
         script: |
           if [ ! -d "app/src/main/assets" ]; then
+            mkdir -p app/src/main/assets/config
             mkdir -p app/src/main/assets/tslFiles
           fi
           
           if [[ "${{ inputs.defaultCentralConfigurationTslUrl_input }}" == *"repo.ria"* ]]; then
             echo "Using repo.ria configuration"
-            echo $REPO_RIA_CONFIG | base64 --decode > app/src/main/assets/tslFiles/default-config.json
-            echo $REPO_RIA_PUB_KEY | base64 --decode > app/src/main/assets/tslFiles/default-config.pub
-            echo $REPO_RIA_RSA | base64 --decode > app/src/main/assets/tslFiles/default-config.rsa
+            echo $REPO_RIA_DEFAULT_PROPERTIES | base64 --decode > app/src/main/assets/config/configuration.properties
+            echo $REPO_RIA_CONFIG | base64 --decode > app/src/main/assets/config/default-config.json
+            echo $REPO_RIA_PUB_KEY | base64 --decode > app/src/main/assets/config/default-config.pub
+            echo $REPO_RIA_RSA | base64 --decode > app/src/main/assets/config/default-config.rsa
             echo $REPO_RIA_TRUSTED_TEST_MP | base64 --decode > app/src/main/assets/tslFiles/trusted-test-mp.xml
             echo $REPO_RIA_EE_TSL | base64 --decode > app/src/main/assets/tslFiles/EE_T.xml
           else
@@ -95,7 +97,11 @@ workflows:
             ./gradlew clean test --no-daemon
       - name: Build RIA DigiDoc
         script: |
-          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration --args="${{ inputs.defaultCentralConfigurationUrl_input }} ${{ inputs.defaultCentralConfigurationUpdateInterval_input }}" -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assemble --debug
+          if [[ "${{ inputs.defaultCentralConfigurationTslUrl_input }}" == *"repo.ria"* ]]; then
+            ./gradlew clean --no-daemon -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assemble --debug
+          else
+            ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration --args="${{ inputs.defaultCentralConfigurationUrl_input }} ${{ inputs.defaultCentralConfigurationUpdateInterval_input }}" -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assemble --debug
+          fi
       - name: Rename and move APK
         script: |
           mkdir app/build/outputs/apk/debug/artifact/
