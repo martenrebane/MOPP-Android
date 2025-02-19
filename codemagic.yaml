@@ -14,13 +14,12 @@ scripts:
   - &setup_tsl_files
     name: "Setup TSL files"
     script: |
-      echo $GOOGLE_SERVICES_JSON | base64 --decode > $CM_BUILD_DIR/app/google-services.json
       if [ ! -d "$CM_BUILD_DIR/app/src/main/assets" ]; then
         cd $CM_BUILD_DIR/app/src/main && { mkdir assets ; cd -; }
         cd $CM_BUILD_DIR/app/src/main/assets && { mkdir tslFiles ; cd -; }
       fi
 
-      cd $CM_BUILD_DIR/app/src/main/assets/tslFiles && { wget $DEFAULT_CENTRAL_CONFIGURATION_TSL_URL ; cd -; }
+      cd $CM_BUILD_DIR/app/src/main/assets/tslFiles && { wget $defaultCentralConfigurationTslUrl_input ; cd -; }
       cd $CM_BUILD_DIR/app/src/main/assets/tslFiles && { wget "https://ec.europa.eu/tools/lotl/eu-lotl.xml" ; cd -; }
   
       if [ -f "$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" ]; then
