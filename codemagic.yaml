@@ -58,7 +58,7 @@ workflows:
             cd $CM_BUILD_DIR/app/src/main/assets && { mkdir tslFiles ; cd -; }
           fi
   
-          wget -P $CM_BUILD_DIR/app/src/main/assets/tslFiles $(basename '${{ inputs.defaultCentralConfigurationUrl_input }}')
+          wget -P $CM_BUILD_DIR/app/src/main/assets/tslFiles ${{ inputs.defaultCentralConfigurationUrl_input }}
           wget -O "eu-lotl.xml" -P $CM_BUILD_DIR/app/src/main/assets/tslFiles "https://ec.europa.eu/tools/lotl/eu-lotl.xml"
   
           if [ -f "$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" ]; then
