@@ -87,8 +87,7 @@ workflows:
           fi
 
           echo "Moving TSLs to app's assets"
-          echo scripts/TSL/*
-          mv "scripts/TSL/*" "app/src/main/assets/tslFiles/"
+          mv -v scripts/TSL/* app/src/main/assets/tslFiles/
           echo "Done moving TSLs"
           ls -lahtR
       - name: Run tests
