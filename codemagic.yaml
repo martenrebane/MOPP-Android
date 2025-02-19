@@ -54,41 +54,40 @@ workflows:
       - *get_google_services_json
       - name: "Setup TSL files"
         script: |
-          if [ ! -d "$CM_BUILD_DIR/app/src/main/assets" ]; then
-            cd $CM_BUILD_DIR/app/src/main && { mkdir assets ; cd -; }
-            cd $CM_BUILD_DIR/app/src/main/assets && { mkdir tslFiles ; cd -; }
+          if [ ! -d "app/src/main/assets" ]; then
+            mkdir -p app/src/main/assets/tslFiles
           fi
           
           if [[ "${{ inputs.defaultCentralConfigurationTslUrl_input }}" == *"repo.ria"* ]]; then
             echo "Using repo.ria configuration"
-            echo $REPO_RIA_CONFIG | base64 --decode > $CM_BUILD_DIR/app/src/main/assets/tslFiles/default-config.json
-            echo $REPO_RIA_PUB_KEY | base64 --decode > $CM_BUILD_DIR/app/src/main/assets/tslFiles/default-config.pub
-            echo $REPO_RIA_RSA | base64 --decode > $CM_BUILD_DIR/app/src/main/assets/tslFiles/default-config.rsa
-            echo $REPO_RIA_TRUSTED_TEST_MP | base64 --decode > $CM_BUILD_DIR/app/src/main/assets/tslFiles/trusted-test-mp.xml
-            echo $REPO_RIA_EE_TSL | base64 --decode > $CM_BUILD_DIR/app/src/main/assets/tslFiles/EE_T.xml
+            echo $REPO_RIA_CONFIG | base64 --decode > app/src/main/assets/tslFiles/default-config.json
+            echo $REPO_RIA_PUB_KEY | base64 --decode > app/src/main/assets/tslFiles/default-config.pub
+            echo $REPO_RIA_RSA | base64 --decode > app/src/main/assets/tslFiles/default-config.rsa
+            echo $REPO_RIA_TRUSTED_TEST_MP | base64 --decode > app/src/main/assets/tslFiles/trusted-test-mp.xml
+            echo $REPO_RIA_EE_TSL | base64 --decode > app/src/main/assets/tslFiles/EE_T.xml
           else
             echo "Not using repo.ria configuration"
           fi
 
-          wget -O "eu-lotl.xml" -P $CM_BUILD_DIR/app/src/main/assets/tslFiles "https://ec.europa.eu/tools/lotl/eu-lotl.xml"
+          wget -O "eu-lotl.xml" -P app/src/main/assets/tslFiles "https://ec.europa.eu/tools/lotl/eu-lotl.xml"
   
-          if [ -f "$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" ]; then
+          if [ -f "app/src/main/assets/tslFiles/eu-lotl.xml" ]; then
             echo "Getting TSL (local LOTL)"
             if [[ "${{ inputs.defaultCentralConfigurationTslUrl_input }}" == *"repo.ria"* ]]; then
-              python3 scripts/TSLXMLDownloader.py --tslFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" --countries="${{ inputs.memberTsl_input }}" --isDevBuild="True"
+              python3 scripts/TSLXMLDownloader.py --tslFile="app/src/main/assets/tslFiles/eu-lotl.xml" --countries="${{ inputs.memberTsl_input }}" --isDevBuild="True"
             else
-              python3 scripts/TSLXMLDownloader.py --tslFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename ${{ inputs.defaultCentralConfigurationTslUrl_input }})" --countries="${{ inputs.memberTsl_input }}" --isDevBuild="True"
+              python3 scripts/TSLXMLDownloader.py --tslFile="app/src/main/assets/tslFiles/eu-lotl.xml" --tslTestFile="app/src/main/assets/tslFiles/$(basename ${{ inputs.defaultCentralConfigurationTslUrl_input }})" --countries="${{ inputs.memberTsl_input }}" --isDevBuild="True"
             fi
 
             echo "Finished downloading TSL"
           else
             echo "Getting TSL (remote LOTL)"
-            python3 scripts/TSLXMLDownloader.py --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename 'https://ec.europa.eu/tools/lotl/eu-lotl.xml')" --countries="${{ inputs.memberTsl_input }}" --isDevBuild="True"
+            python3 scripts/TSLXMLDownloader.py --tslTestFile="app/src/main/assets/tslFiles/$(basename 'https://ec.europa.eu/tools/lotl/eu-lotl.xml')" --countries="${{ inputs.memberTsl_input }}" --isDevBuild="True"
             echo "Finished downloading TSL"
           fi
 
           echo "Moving TSLs to app's assets"
-          mv "scripts/TSL/*" "$CM_BUILD_DIR/app/src/main/assets/tslFiles/"
+          mv "scripts/TSL/*" "app/src/main/assets/tslFiles/"
           echo "Done moving TSLs"
           ls -lahtR
       - name: Run tests
