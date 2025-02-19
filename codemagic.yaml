@@ -21,13 +21,14 @@ workflows:
       java: 17
       groups:
         - "google_services"
+        - "repo_ria"
     inputs:
       defaultCentralConfigurationUrl_input:
         description: Default Central Configuration URL
         type: choice
-        default: http://repo.ria/config
+        default: https://repo.ria/config
         options:
-          - http://repo.ria/config
+          - https://repo.ria/config
           - https://id.eesti.ee
           - https://id.test.eesti.ee
           - http://10.0.25.57/updater
@@ -38,9 +39,9 @@ workflows:
       defaultCentralConfigurationTslUrl_input:
         description: Default Central Configuration TSL URL
         type: choice
-        default: http://repo.ria/tsl/trusted-test-mp.xml
+        default: https://repo.ria/tsl/trusted-test-mp.xml
         options:
-          - http://repo.ria/tsl/trusted-test-mp.xml
+          - https://repo.ria/tsl/trusted-test-mp.xml
           - https://ec.europa.eu/tools/lotl/eu-lotl.xml
           - https://open-eid.github.io/test-TL/tl-mp-test-EE.xml
       memberTsl_input:
@@ -63,6 +64,7 @@ workflows:
             echo $REPO_RIA_CONFIG | base64 --decode > $CM_BUILD_DIR/app/src/main/assets/tslFiles/default-config.json
             echo $REPO_RIA_PUB_KEY | base64 --decode > $CM_BUILD_DIR/app/src/main/assets/tslFiles/default-config.pub
             echo $REPO_RIA_RSA | base64 --decode > $CM_BUILD_DIR/app/src/main/assets/tslFiles/default-config.rsa
+            echo $REPO_RIA_TRUSTED_TEST_MP | base64 --decode > $CM_BUILD_DIR/app/src/main/assets/tslFiles/trusted-test-mp.xml
           else
             echo "Not using repo.ria configuration"
           fi
@@ -72,7 +74,7 @@ workflows:
           if [ -f "$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" ]; then
             echo "Downloading TSL (local LOTL)"
             echo "$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename ${{ inputs.defaultCentralConfigurationTslUrl_input }})"
-            python3 scripts/TSLXMLDownloader.py --tslFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/$(basename ${{ inputs.defaultCentralConfigurationTslUrl_input }})" --countries="${{ inputs.memberTsl_input }}" --isDevBuild="True"
+            python3 scripts/TSLXMLDownloader.py --tslFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/eu-lotl.xml" --tslTestFile="$CM_BUILD_DIR/app/src/main/assets/tslFiles/trusted-test-mp.xml" --countries="${{ inputs.memberTsl_input }}" --isDevBuild="True"
             echo "Finished downloading TSL"
           else
             echo "Downloading TSL (remote LOTL)"
