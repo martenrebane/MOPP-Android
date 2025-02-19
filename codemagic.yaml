@@ -68,8 +68,8 @@ workflows:
     scripts:
       - name: Setup TSL environment
         script: |
-          export DEFAULT_CENTRAL_CONFIGURATION_URL = $defaultCentralConfigurationUrl_input
-          export TSL_MEMBER_LIST = $memberTsl_input
+          export DEFAULT_CENTRAL_CONFIGURATION_URL=${{ inputs.defaultCentralConfigurationUrl_input }}
+          export TSL_MEMBER_LIST=${{ inputs.memberTsl_input }}
       - *set_android_sdk_location
       - *get_app_version
       - *get_google_services_json
@@ -79,7 +79,7 @@ workflows:
             ./gradlew clean test --no-daemon
       - name: Build RIA DigiDoc
         script: |
-          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration --args="$defaultCentralConfigurationUrl_input $defaultCentralConfigurationUpdateInterval_input" -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assemble --debug
+          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration --args="${{ inputs.defaultCentralConfigurationUrl_input }} ${{ inputs.defaultCentralConfigurationUpdateInterval_input }}" -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assemble --debug
       - name: Rename and move APK
         script: |
           mkdir app/build/outputs/apk/debug/artifact/
