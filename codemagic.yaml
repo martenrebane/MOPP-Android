@@ -54,9 +54,11 @@ workflows:
       - *get_google_services_json
       - name: "Setup config and TSL files"
         script: |
+          # Create config and TSL folders
           mkdir -p app/src/main/assets/config
           mkdir -p app/src/main/assets/tslFiles
 
+          # Get repo.ria values from environmental variables, as CodeMagic doesn't have access to repo.ria domain
           if [[ "${{ inputs.defaultCentralConfigurationTslUrl_input }}" == *"repo.ria"* ]]; then
             echo "Using repo.ria configuration"
             echo $REPO_RIA_DEFAULT_PROPERTIES | base64 --decode > app/src/main/assets/config/configuration.properties
@@ -69,10 +71,12 @@ workflows:
             echo "Not using repo.ria configuration"
           fi
 
+          # Download latest 'eu-lotl' file
           wget -O "eu-lotl.xml" -P app/src/main/assets/tslFiles "https://ec.europa.eu/tools/lotl/eu-lotl.xml"
   
           if [ -f "app/src/main/assets/tslFiles/eu-lotl.xml" ]; then
             echo "Getting TSL (local LOTL)"
+            # Repo.ria TSL files already in assets folder, doesn't need to download separately anymore
             if [[ "${{ inputs.defaultCentralConfigurationTslUrl_input }}" == *"repo.ria"* ]]; then
               python3 scripts/TSLXMLDownloader.py --tslFile="app/src/main/assets/tslFiles/eu-lotl.xml" --countries="${{ inputs.memberTsl_input }}" --isDevBuild="True"
             else
@@ -89,12 +93,12 @@ workflows:
           echo "Moving TSLs to app's assets"
           mv -v scripts/TSL/* app/src/main/assets/tslFiles/
           echo "Done moving TSLs"
-          ls -lahtR
       - name: Run tests
         script: |
             ./gradlew clean test --no-daemon
       - name: Build RIA DigiDoc
         script: |
+          # Not running 'fetchAndPackageDefaultConfiguration' for repo.ria as necessary files are already setup
           if [[ "${{ inputs.defaultCentralConfigurationTslUrl_input }}" == *"repo.ria"* ]]; then
             ./gradlew clean --no-daemon -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assemble --debug
           else
@@ -121,12 +125,17 @@ workflows:
       java: 17
       groups:
         - "live"
+      vars:
+        PACKAGE_NAME: "ee.ria.DigiDoc"
+      android_signing:
+        - keystore_reference
     scripts:
       - *set_android_sdk_location
       - *get_app_version
+      - *get_google_services_json
       - name: Setup Gradle and Build RIA DigiDoc
         script: |
-          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assembleRelease -PskipGoogleServices
+          ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assembleRelease
       - name: Rename APK
         script: |
           mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/"RIA_DigiDoc_$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER-unsigned.apk"
