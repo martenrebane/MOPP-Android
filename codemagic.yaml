@@ -16,7 +16,7 @@ workflows:
   repo-ria:
     name: RIA DigiDoc Android (MOPP2) - Repo.ria configuration
     max_build_duration: 30
-    instance_type: mac_mini_m2
+    instance_type: linux_x2
     environment:
       java: 17
       groups:
@@ -73,7 +73,7 @@ workflows:
 
           # Download latest 'eu-lotl' file
           wget -O "eu-lotl.xml" -P app/src/main/assets/tslFiles "https://ec.europa.eu/tools/lotl/eu-lotl.xml"
-  
+          
           if [ -f "app/src/main/assets/tslFiles/eu-lotl.xml" ]; then
             echo "Getting TSL (local LOTL)"
             # Repo.ria TSL files already in assets folder, doesn't need to download separately anymore
@@ -95,7 +95,7 @@ workflows:
           echo "Done moving TSLs"
       - name: Run tests
         script: |
-            ./gradlew clean test --no-daemon
+          ./gradlew clean test --no-daemon
       - name: Build RIA DigiDoc
         script: |
           # Not running 'fetchAndPackageDefaultConfiguration' for repo.ria as necessary files are already setup
@@ -120,15 +120,15 @@ workflows:
   live:
     name: RIA DigiDoc Android (MOPP2) - Live configuration
     max_build_duration: 30
-    instance_type: mac_mini_m2
+    instance_type: linux_x2
     environment:
       java: 17
       groups:
-        - "live"
+        - "google_services"
       vars:
         PACKAGE_NAME: "ee.ria.DigiDoc"
       android_signing:
-        - keystore_reference
+        - RIA DigiDoc (MOPP)
     scripts:
       - *set_android_sdk_location
       - *get_app_version
@@ -136,11 +136,18 @@ workflows:
       - name: Setup Gradle and Build RIA DigiDoc
         script: |
           ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER assembleRelease
-      - name: Rename APK
+      - name: Align APK
         script: |
-          mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/"RIA_DigiDoc_$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER-unsigned.apk"
+          zipalign -v -p 4 app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/app-release-unsigned-aligned.apk
+      - name: Sign APK
+        script: |
+          apksigner sign --ks $CM_KEYSTORE_PATH --ks-pass pass:$CM_KEYSTORE_PASSWORD --out app/build/outputs/apk/release/app-release_$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER.apk app/build/outputs/apk/release/app-release-unsigned-aligned.apk
+      - name: Rename and move APK
+        script: |
+          mkdir -p app/build/outputs/apk/release/signed/
+          mv app/build/outputs/apk/release/app-release_$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER.apk app/build/outputs/apk/release/signed/RIA_DigiDoc_$APP_VERSION_NAME.$PROJECT_BUILD_NUMBER.apk
     artifacts:
-      - app/build/outputs/apk/release/*.apk
+      - app/build/outputs/apk/release/signed/*.apk
     publishing:
       email:
         recipients:
