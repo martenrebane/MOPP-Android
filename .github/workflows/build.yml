@@ -5,7 +5,6 @@ env:
 jobs:
   ubuntu:
     name: Build on Ubuntu
-    if: contains(github.repository, 'open-eid/MOPP-Android') && contains(github.ref, 'master')
     runs-on: ubuntu-latest
     env:
       APK_RELEASE_DIRECTORY: "app/build/outputs/apk/release"
