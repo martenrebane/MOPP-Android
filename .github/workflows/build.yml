@@ -57,15 +57,15 @@ jobs:
           mv libdigidocpp-androidx86_64/libdigidocpp.androidx86_64.zip libdigidocpp-files/
           pwd
           ls -R -laht
-      #- name: Update libdigidocpp in project
-      #  run: |
-      #    pwd
-      #    ./gradlew common-lib:updateLibdigidocpp --dir=libdigidocpp-files/
-      #    ./gradlew sign-lib:updateLibdigidocpp --dir=libdigidocpp-files/
+      - name: Update libdigidocpp in project
+        run: |
+          pwd
+          ./gradlew common-lib:updateLibdigidocpp --dir=libdigidocpp-files/
+          ./gradlew sign-lib:updateLibdigidocpp --dir=libdigidocpp-files/
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
       - name: Test and Build with Gradle
-        run: ./gradlew clean test --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=${{ env.APP_VERSION_NAME }}.${{ env.BUILD_NUMBER }} assembleRelease --info
+        run: ./gradlew clean test --no-daemon fetchAndPackageDefaultConfiguration -PappVersionName=${{ env.APP_VERSION_NAME }}.${{ env.BUILD_NUMBER }} assembleRelease --info --quiet
       - name: Sign app APK
         uses: r0adkll/sign-android-release@v1
         id: signed_apk
