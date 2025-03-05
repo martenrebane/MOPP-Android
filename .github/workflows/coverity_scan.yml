@@ -33,6 +33,9 @@ jobs:
           mkdir coverity-tool
           tar -xzf coverity_tool.tar.gz --strip 1 -C coverity-tool
           export PATH="${PWD}/coverity-tool/bin:${PATH}"
+          pwd
+          echo "PWD: ${PWD}"
+          echo "PATH: ${PATH}"
           
       - name: Build and analyze
         run: |
