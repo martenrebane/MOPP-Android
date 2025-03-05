@@ -30,12 +30,13 @@ jobs:
           curl https://scan.coverity.com/download/java/linux64 \
             --output coverity_tool.tar.gz \
             --data "token=${{ secrets.COVERITY_SCAN_TOKEN }}&project=martenrebane/MOPP-Android"
-          tar -xzf coverity_tool.tar.gz
-          export PATH=$PATH:$PWD/cov-analysis-linux64/bin
+          mkdir coverity-tool
+          tar -xzf coverity_tool.tar.gz --strip 1 -C coverity-tool
+          export PATH="${PWD}/coverity-tool/bin:${PATH}"
           
       - name: Build and analyze
         run: |
-          cov-build --dir cov-int ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration assemble --debug --stacktrace
+          cov-build --dir cov-int ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration assemble --quiet
 
       - name: Package results
         run: tar czvf coverity_results.tgz cov-int
@@ -47,8 +48,8 @@ jobs:
             --form email=marten.rebane@nortal.com \
             --form file=@coverity_results.tgz \
             --form version="${{ github.sha }}" \
-            --form description="GitHub Actions build" \
-            https://scan.coverity.com/builds?project=MOPP-Android
+            --form description="${{ github.repository }}" \
+            https://scan.coverity.com/builds?project=martenrebane/MOPP-Android
 
       #- name: Build and send to Coverity
       #  continue-on-error: true
