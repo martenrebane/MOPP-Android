@@ -29,7 +29,7 @@ jobs:
         run: |
           curl -o coverity_tool.tgz -X POST \
             -F "token=${{ secrets.COVERITY_SCAN_TOKEN }}" \
-            -F "project=your_project_name" \
+            -F "project=MOPP-Android" \
             https://scan.coverity.com/download/linux64
 
           tar -xzf coverity_tool.tgz
