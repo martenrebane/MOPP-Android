@@ -27,7 +27,7 @@ jobs:
 
       - name: Install Coverity Scan Tool
         run: |
-          curl -O -LI "https://scan.coverity.com/download/linux64"
+          wget --content-disposition "https://scan.coverity.com/download/linux64"
           tar -xzf coverity_tool.tgz
           export PATH=$PATH:$PWD/cov-analysis-linux64/bin
           
