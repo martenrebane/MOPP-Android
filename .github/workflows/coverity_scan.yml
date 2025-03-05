@@ -27,15 +27,12 @@ jobs:
 
       - name: Install Coverity Scan Tool
         run: |
-          wget https://scan.coverity.com/download/linux64 \
-            --post-data "token=${{ secrets.COVERITY_SCAN_TOKEN }}&project=MOPP-Android" \
-            -O coverity_tool.tgz
+          wget -nv -O coverity_tool.tgz https://scan.coverity.com/download/linux64 --post-data "project=MOPP-Android&token=${{ secrets.COVERITY_SCAN_TOKEN }}"
           tar -xzf coverity_tool.tgz
           export PATH=$PATH:$PWD/cov-analysis-linux64/bin
           
       - name: Build and analyze
         run: |
-          ./gradlew clean assembleDebug
           cov-build --dir cov-int ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration assemble --debug --stacktrace
 
       - name: Package results
