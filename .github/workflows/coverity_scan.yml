@@ -25,16 +25,42 @@ jobs:
           distribution: zulu
           java-version: 17
 
-      - name: Build and send to Coverity
-        continue-on-error: true
+      - name: Install Coverity Scan Tool
         run: |
-          export TRAVIS_BRANCH=${GITHUB_REF##*/}
-          wget https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh
-          chmod +x travisci_build_coverity_scan.sh
-          bash travisci_build_coverity_scan.sh
-        env:
-          COVERITY_SCAN_PROJECT_NAME: 'martenrebane/MOPP-Android'
-          COVERITY_SCAN_NOTIFICATION_EMAIL: 'marten.rebane@nortal.com'
-          COVERITY_SCAN_BRANCH_PATTERN: 'coverity_scan'
-          COVERITY_SCAN_BUILD_COMMAND: './gradlew clean --no-daemon fetchAndPackageDefaultConfiguration assemble --debug --stacktrace'
-          COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+          wget https://scan.coverity.com/download/linux64 \
+            --post-data "token=${{ secrets.COVERITY_SCAN_TOKEN }}&project=MOPP-Android" \
+            -O coverity_tool.tgz
+          tar -xzf coverity_tool.tgz
+          export PATH=$PATH:$PWD/cov-analysis-linux64/bin
+          
+      - name: Build and analyze
+        run: |
+          ./gradlew clean assembleDebug
+          cov-build --dir cov-int ./gradlew clean --no-daemon fetchAndPackageDefaultConfiguration assemble --debug --stacktrace
+
+      - name: Package results
+        run: tar czvf coverity_results.tgz cov-int
+
+      - name: Upload to Coverity Scan
+        run: |
+          curl \
+            --form token=${{ secrets.COVERITY_SCAN_TOKEN }} \
+            --form email=marten.rebane@nortal.com \
+            --form file=@coverity_results.tgz \
+            --form version="${{ github.sha }}" \
+            --form description="GitHub Actions build" \
+            https://scan.coverity.com/builds?project=MOPP-Android
+
+      #- name: Build and send to Coverity
+      #  continue-on-error: true
+      #  run: |
+      #    export TRAVIS_BRANCH=${GITHUB_REF##*/}
+      #    wget https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh
+      #   chmod +x travisci_build_coverity_scan.sh
+      #   bash travisci_build_coverity_scan.sh
+      #  env:
+      #    COVERITY_SCAN_PROJECT_NAME: 'martenrebane/MOPP-Android'
+      #    COVERITY_SCAN_NOTIFICATION_EMAIL: 'marten.rebane@nortal.com'
+      #    COVERITY_SCAN_BRANCH_PATTERN: 'coverity_scan'
+      #    COVERITY_SCAN_BUILD_COMMAND: './gradlew clean --no-daemon fetchAndPackageDefaultConfiguration assemble --debug --stacktrace'
+      #    COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
