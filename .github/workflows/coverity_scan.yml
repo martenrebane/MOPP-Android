@@ -27,8 +27,10 @@ jobs:
 
       - name: Install Coverity Scan Tool
         run: |
-          wget --content-disposition "https://scan.coverity.com/download/linux64"
-          tar -xzf coverity_tool.tgz
+          curl https://scan.coverity.com/download/java/linux64 \
+            --output coverity_tool.tar.gz \
+            --data "token=${{ secrets.COVERITY_SCAN_TOKEN }}&project=martenrebane/MOPP-Android"
+          tar -xzf coverity_tool.tar.gz
           export PATH=$PATH:$PWD/cov-analysis-linux64/bin
           
       - name: Build and analyze
